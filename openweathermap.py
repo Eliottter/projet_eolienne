@@ -100,7 +100,7 @@ def main():
             # Publier les données sur le topic MQTT
             client.publish(TOPIC, str(weather_data))
         
-        time.sleep(1)
+        time.sleep(60)
 
 if __name__ == "__main__":
     main()
