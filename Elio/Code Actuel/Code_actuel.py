@@ -5,7 +5,7 @@ import time
 AUTOMATE_IP = "172.90.93.62"
 AUTOMATE_PORT = 502
 
-# Définition des ports et de leur bit correspondant cacacaccaac
+# Définition des ports et de leur bit correspondant 
 PORTS = {
   8:  0b000100000000,  # 256
   9:  0b001000000000,  # 512
