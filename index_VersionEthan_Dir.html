@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervision Météorologique</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .synoptique {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .compass-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .compass-image {
+            width: 300px;
+            height: 300px;
+            transition: transform 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-primary text-white text-center p-3">
+        <h1>Supervision Météorologique</h1>
+        <a href="login.html" target="_blank" class="btn btn-primary btn-lg">Se Connecter</a>
+    </header>
+
+    <!-- Contenu principal -->
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Colonne gauche : Synoptique -->
+            <div class="col-md-4 synoptique">
+                <h2>Synoptique</h2>
+                <p>Affichage des états en temps réel.</p>
+                <ul>
+                    <li>Vitesse du vent : <span id="vent">0</span> km/h</li>
+                    <li>Température : <span id="temperature">0</span> °C</li>
+                    <li>Direction du vent (texte) : <span id="direction">N</span></li>
+                    <li>Direction du vent (degrés) : <span id="directionDegrees">0</span>°</li>
+                </ul>
+                
+
+                <!-- Section boussole -->
+                <div class="compass-container">
+                    <h2>Boussole</h2>
+                    <p>Direction actuelle du vent : <span id="directionText">N</span></p>
+                    <img src="compass-dark.png" alt="Boussole" class="compass-image" id="compassImage">
+                </div>
+            </div>
+
+            <!-- Colonne droite : Graphiques -->
+            <div class="col-md-8">
+                <h2>Données en temps réel</h2>
+                <canvas id="graphique"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Base de graphique avec Chart.js
+        const lineChartCtx = document.getElementById('graphique').getContext('2d');
+
+        // Graphique linéaire
+        const myChart = new Chart(lineChartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Vitesse du vent (km/h)',
+                    data: [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    tension: 0.1
+                }]
+            }
+        });
+
+        // Fonction pour récupérer les données météorologiques depuis le fichier JSON
+        async function fetchWeatherData() {
+            try {
+                const response = await fetch('weather_data.json');  // Charger les données depuis le fichier JSON
+                const data = await response.json();
+
+                // Si les données sont valides, mettez à jour l'interface
+                if (data.vitesseVent) {
+                    document.getElementById('vent').innerText = data.vitesseVent;
+                    document.getElementById('temperature').innerText = data.temperature;
+                    document.getElementById('direction').innerText = data.directionVent1;
+                    document.getElementById('directionText').innerText = data.directionVent1;
+
+                    // Mettre à jour la boussole avec la direction du vent
+                    updateCompass(data.directionVent); // Utiliser l'angle de la direction
+                    updateChart(data.vitesseVent);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données météorologiques:', error);
+            }
+        }
+
+        // Fonction pour mettre à jour la boussole
+        function updateCompass(directionAngle) {
+            const compassImage = document.getElementById('compassImage');
+            compassImage.style.transform = `rotate(${directionAngle}deg)`;  // Rotation de l'image de la boussole
+        }
+
+        // Fonction pour mettre à jour le graphique avec les nouvelles données
+        function updateChart(vitesseVent) {
+            const currentTime = new Date().toLocaleTimeString();
+            
+            // Ajouter les nouvelles données au graphique
+            myChart.data.labels.push(currentTime);
+            myChart.data.datasets[0].data.push(vitesseVent);
+
+            // Limiter le nombre de points sur le graphique (10 derniers)
+            if (myChart.data.labels.length > 10) {
+                myChart.data.labels.shift();
+                myChart.data.datasets[0].data.shift();
+            }
+
+            // Mettre à jour le graphique
+            myChart.update();
+        }
+
+        // Mettre à jour toutes les 5 secondes
+        setInterval(fetchWeatherData, 5000);
+    </script>
+</body>
+</html>
