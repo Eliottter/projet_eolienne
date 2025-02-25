@@ -22,7 +22,7 @@ try:
         print("Connexion réussie.")
         print(f"Port 120 : {client.read_holding_registers(120).registers[0]}")
 
-        for i in range(60):
+        for i in range(6):
             # Lecture du registre 160
             result160 = client.read_holding_registers(160)  # Ajout du nombre de registres à lire
             if result160.isError():
