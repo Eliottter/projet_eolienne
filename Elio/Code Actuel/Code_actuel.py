@@ -49,7 +49,7 @@ try:
 ##############################################################
             print("----------------")
 
-            time.sleep(2)  # Attente avant la prochaine lecture/écriture
+            time.sleep(2)  
 
     else:
         print("Échec de la connexion.")
