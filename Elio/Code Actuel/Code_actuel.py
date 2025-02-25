@@ -49,7 +49,7 @@ try:
 ##############################################################
             print("----------------")
 
-            time.sleep(2)  #caca
+            time.sleep(2) 
 
     else:
         print("Échec de la connexion.")
