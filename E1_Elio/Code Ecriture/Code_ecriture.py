@@ -36,7 +36,7 @@ try:
 
             valeur_lue = client.read_holding_registers(160+i).registers[0]
             print(f"Valeur lue : {valeur_lue} ({bin(valeur_lue)})")
-            time.sleep(1)
+            time.sleep(10)
 
     else:
         print("Échec de la connexion.")
