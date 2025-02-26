@@ -6,13 +6,13 @@ import sqlite3
 # Configuration
 BROKER_ADDRESS = "broker.hivemq.com"
 TOPIC = "weather/data"
-WEATHER_API_URL = "http://api.weatherapi.com/v1/current.json"
-API_KEY = "9b4f6d96f5cd4a709db145328252201"  # API Key de WeatherAPI
-WEB_SERVER_URL = "http://10.160.120.89"  # Adresse de votre serveur web
+WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
+API_KEY = "94df689b87c4a001afc9562d1bfb2888"  # Votre clé API OpenWeatherMap
+WEB_SERVER_URL = "http://10.160.120.89"  # Adresse de notre serveur web
 
 # MQTT Callbacks
 def on_connect(client, userdata, flags, rc, *extra_args):
-    print("Connecté au broker avec le code de résultat " + str(rc))
+    print("Connexion au broker réussie")
     client.subscribe(TOPIC)
 
 def on_message(client, userdata, msg):
@@ -20,24 +20,24 @@ def on_message(client, userdata, msg):
     send_to_web_server(msg.payload.decode())
 
 # Fonction pour récupérer les données météorologiques
-def get_donnee_meteo():
+def get_weather_data(lat, lon):
     try:
-        # Demande à l'API pour la ville de Portland
-        response = requests.get(WEATHER_API_URL, params={"key": API_KEY, "q": "Portland"})
+        # Faire une requête à l'API OpenWeatherMap avec les coordonnées lat, lon
+        url = WEATHER_API_URL.format(lat=lat, lon=lon, API_KEY=API_KEY)
+        response = requests.get(url)
         if response.status_code == 200:
             return response.json()
         else:
             print(f"Échec de la récupération des données météorologiques. Code d'erreur: {response.status_code}")
-            print("Réponse de l'API:", response.text)  # Affiche la réponse complète de l'API
+            print("Réponse de l'API:", response.text)  # Afficher la réponse complète de l'API
             return None
     except Exception as e:
         print(f"Erreur lors de la récupération des données météorologiques: {e}")
         return None
 
-# Fonction pour envoyer les données au serveur web
+# Fonction pour envoyer les données à un serveur web
 def send_to_web_server(data):
     try:
-        # Envoi des données sous forme de JSON
         response = requests.post(WEB_SERVER_URL, json={"weather_data": data})
         if response.status_code == 200:
             print("Données envoyées au serveur web avec succès")
@@ -48,19 +48,19 @@ def send_to_web_server(data):
 
 # Configuration de la base de données
 def setup_database():
-    conn = sqlite3.connect('BDD_meteo.db')
+    conn = sqlite3.connect('meteo_test.db')
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS meteo
-                 (DateHeure TIMESTAMP, VitesseVent REAL, Temperature REAL, DirectionVent FLOAT, DirectionVent1 FLOAT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS weather
+                 (timestamp TEXT, wind_speed REAL, temperature REAL, is_raining INTEGER)''')
     conn.commit()
     conn.close()
 
-def insert_donnee_meteo(vitesseVent, temperature, DirectionVent, DirectionVent1):
-    conn = sqlite3.connect('BDD_meteo.db')
+# Fonction pour insérer les données météorologiques dans la base de données
+def insert_weather_data(wind_speed, temperature, is_raining):
+    conn = sqlite3.connect('meteo_test.db')
     c = conn.cursor()
-    # Insertion des données dans la base de données
-    c.execute("INSERT INTO meteo (DateHeure, VitesseVent, Temperature, DirectionVent, DirectionVent1) VALUES (datetime('now'), ?, ?, ?, ?)",
-          (vitesseVent, temperature, DirectionVent, DirectionVent1))
+    c.execute("INSERT INTO weather (timestamp, wind_speed, temperature, is_raining) VALUES (datetime('now'), ?, ?, ?)",
+              (wind_speed, temperature, is_raining))
     conn.commit()
     conn.close()
 
@@ -80,27 +80,27 @@ def main():
     # Démarrer la boucle MQTT
     client.loop_start()
 
+    # Coordonnées de Brest (latitude et longitude)
+    lat = 48.3904
+    lon = -4.4861
+
     while True:
         # Récupération des données météorologiques
-        donnee_meteo = get_donnee_meteo()
-        if donnee_meteo:
-            print("Données météo récupérées : ", donnee_meteo)  # Afficher les données météo récupérées
-            
-            # Extraction des données nécessaires
-            vitesseVent = donnee_meteo["current"]["wind_kph"]  # Vitesse du vent
-            temperature = donnee_meteo["current"]["temp_c"]  # Température en degres Celsius
-            # Vérification de la pluie (si la clé 'rain' est présente dans la réponse)
-            DirectionVent = donnee_meteo["current"]["wind_degree"] 
-            DirectionVent1 = donnee_meteo["current"]["wind_dir"] 
-
+        weather_data = get_weather_data(lat, lon)
+        if weather_data:
+            print("Données météo récupérées : ", weather_data)  # Afficher les données météo récupérées
+            # Extraction des données qui nous intéressent
+            wind_speed = weather_data["wind"]["speed"]  # Vitesse du vent (en m/s)
+            temperature = weather_data["main"]["temp"]  # Température (en °C)
+            is_raining = 1 if "rain" in weather_data else 0  # Vérifier s'il pleut
             
             # Insérer les données dans la base de données
-            insert_donnee_meteo(vitesseVent, temperature, DirectionVent, DirectionVent1)
+            insert_weather_data(wind_speed, temperature, is_raining)
             
             # Publier les données sur le topic MQTT
-            client.publish(TOPIC, str(donnee_meteo))
+            client.publish(TOPIC, str(weather_data))
         
-        time.sleep(60)  # Attendre 60 secondes avant de récupérer de nouvelles données
+        time.sleep(60)
 
 if __name__ == "__main__":
     main()
