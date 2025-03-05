@@ -24,7 +24,7 @@ try:
         print("Connexion réussie.")
 
         # Lecture du registre 120
-        result = client.read_holding_registers(160)
+        result = client.read_holding_registers(120) # Choix du port de lecture ici 
         if result.isError():
            print("Registre 120 : inaccessible ou vide.")
 

@@ -24,7 +24,7 @@ try:
 
         for i in range(3):
                 ### Écriture dans le registre 160
-            valeur_a_ecrire = 0# Mettre la valeur que l'on veux écrire
+            valeur_a_ecrire = 1# Mettre la valeur que l'on veux écrire
             port_utiliser = 160+i
 
             write_result = client.write_register(port_utiliser, valeur_a_ecrire)
