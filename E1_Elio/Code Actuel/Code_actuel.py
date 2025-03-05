@@ -54,8 +54,6 @@ try:
     print(" Connexion à l'automate...")
     if client.connect():  
         print(" Connexion réussie.")
-
-        for i in range(5):  # Boucle de lecture sur 5 cycles
             print(f"\n Lecture du cycle {i+1}")
 
             # Lire chaque registre un par un
