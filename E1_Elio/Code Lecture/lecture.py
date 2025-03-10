@@ -14,6 +14,8 @@ PORTS = {
   11: 0b100000000000   # 2048
 }
 
+
+
 # Connexion à l'automate
 client = ModbusClient(host=AUTOMATE_IP, port=AUTOMATE_PORT)
 

@@ -2,20 +2,24 @@ from pymodbus.client import ModbusTcpClient as ModbusClient
 import time
 
 # Configuration de l'automate
-AUTOMATE_IP = "172.90.93.62"
+AUTOMATE_IP = "172.90.93.91"  # Nouvelle adresse IP
 AUTOMATE_PORT = 502
-MAX_RETRIES = 3  # Nombre de tentatives en cas d'échec de lecture
+MAX_RETRIES = 3  # Nombre de tentatives en cas d'échec de lecture/écriture
 
-# Définition des ports et de leur bit correspondant
-PORTS = {
-    8:  0b000100000000,  # 256
-    9:  0b001000000000,  # 512
-    10: 0b010000000000,  # 1024
-    11: 0b100000000000   # 2048
+# Définition des registres à lire
+REGISTERS_TO_READ = {
+    "Entrees_Carte3": 100,  # Recopie des entrées logiques I0.3 à I0.7
+    "Sorties_Carte3": 120,  # Recopie des sorties logiques Q0.3.16 à Q0.3.23
+    "Sorties_Carte4": 140,  # Recopie des sorties logiques Q0.4.0 à Q0.4.15
+    "Codeur_Nacelle": 28    # Valeur du codeur absolu de la rotation nacelle
 }
 
-# Liste des registres à lire individuellement
-REGISTERS_TO_READ = [120, 160, 161, 162]
+# Définition des registres d'écriture (capteurs)
+REGISTERS_TO_WRITE = {
+    "C1_Capteur1": 160,
+    "C2_Capteur2": 161,
+    "C3_Capteur3": 163
+}
 
 # Connexion à l'automate
 client = ModbusClient(host=AUTOMATE_IP, port=AUTOMATE_PORT)
@@ -31,7 +35,7 @@ def read_register_safe(client, address):
         Valeur du registre ou None en cas d'échec.
     """
     for attempt in range(MAX_RETRIES):
-        result = client.read_holding_registers(address)  #  Lecture d'un seul registre
+        result = client.read_holding_registers(address, 1)  # Lecture d'un seul registre
         if not result.isError():
             return result.registers[0]  # Retourne la valeur si la lecture est réussie
         print(f" Erreur de lecture au registre {address}. Tentative {attempt+1}/{MAX_RETRIES}")
@@ -39,42 +43,57 @@ def read_register_safe(client, address):
     return None  # Retourne None si la lecture échoue après toutes les tentatives
 
 
-def get_active_ports(value):
+def write_register_safe(client, address, value):
     """
-    Vérifie quels ports sont activés en fonction du masque binaire.
+    Fonction pour tenter plusieurs fois d'écrire une valeur dans un registre.
     Args:
-        value: Valeur lue depuis le registre.
+        client: Instance de ModbusTcpClient.
+        address: Adresse du registre à écrire.
+        value: Valeur à écrire.
     Returns:
-        Liste des ports activés.
+        True si l'écriture est réussie, False sinon.
     """
-    return [port for port, mask in PORTS.items() if value & mask]
+    for attempt in range(MAX_RETRIES):
+        result = client.write_register(address, value)
+        if not result.isError():
+            print(f" Écriture réussie : {value} → registre {address}")
+            return True
+        print(f" Erreur d'écriture au registre {address}. Tentative {attempt+1}/{MAX_RETRIES}")
+        time.sleep(1)
+    return False  # Retourne False si l'écriture échoue
 
 
 try:
     print(" Connexion à l'automate...")
     if client.connect():  
         print(" Connexion réussie.")
+
         for i in range(5):  # Boucle de lecture sur 5 cycles
             print(f"\n Lecture du cycle {i+1}")
 
-            # Lire chaque registre un par un
+            # Lire chaque registre défini dans REGISTERS_TO_READ
             values = {}
-            for reg in REGISTERS_TO_READ:
-                values[reg] = read_register_safe(client, reg)
+            for name, reg in REGISTERS_TO_READ.items():
+                values[name] = read_register_safe(client, reg)
 
-            # Vérification et affichage des valeurs lues
-            for reg, value in values.items():
+            # Affichage des valeurs lues
+            for name, value in values.items():
                 if value is not None:
-                    print(f" Valeur lue (port {reg}): {value} ({bin(value)})")
+                    print(f" {name} ({REGISTERS_TO_READ[name]}) : {value} ({bin(value)})")
                 else:
-                    print(f" Impossible de lire le registre {reg}.")
+                    print(f" Impossible de lire {name} ({REGISTERS_TO_READ[name]})")
 
-            # Vérification des ports activés à partir du registre 120
-            if values[120] is not None:
-                ports_actifs = get_active_ports(values[120])
-                print(f" Ports activés : {ports_actifs if ports_actifs else 'Aucun'}")
+            # Exemple d'écriture dans les registres des capteurs
+            sensor_values = {
+                "C1_Capteur1": 25,  # Exemple : température en degrés
+                "C2_Capteur2": 5,   # Exemple : inclinaison en degrés
+                "C3_Capteur3": 100  # Exemple : autre donnée
+            }
 
-            time.sleep(10)  # Attente avant la prochaine lecture
+            for name, value in sensor_values.items():
+                write_register_safe(client, REGISTERS_TO_WRITE[name], value)
+
+            time.sleep(2)  # Attente avant la prochaine lecture
 
     else:
         print(" Échec de la connexion.")
