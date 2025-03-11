@@ -85,7 +85,7 @@ try:
                 ports_actifs = get_active_ports(values[120])
                 print(f" Ports activés : {ports_actifs if ports_actifs else 'Aucun'}")
 
-            time.sleep(2)  # Attente avant la prochaine lecture
+            time.sleep(5)  # Attente avant la prochaine lecture
 
     else:
         print(" Échec de la connexion.")

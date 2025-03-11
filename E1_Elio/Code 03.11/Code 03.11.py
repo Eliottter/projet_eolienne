@@ -87,7 +87,7 @@ try:
             sensor_values = {
                 "C1_Capteur1": 25,  # Exemple : température en degrés
                 "C2_Capteur2": 5,   # Exemple : inclinaison en degrés
-                "C3_Capteur3": 100  # Exemple : autre donnée si nécessaire 
+                "C3_Capteur3": 100  # Exemple : autre donnée
             }
 
             for name, value in sensor_values.items():
@@ -104,4 +104,3 @@ except Exception as e:
 finally:
     client.close()
     print(" Connexion fermée.")
-
