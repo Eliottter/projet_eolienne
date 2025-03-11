@@ -1,4 +1,5 @@
 from pymodbus.client import ModbusTcpClient as ModbusClient
+import sqlite3
 import time
 
 # Configuration de l'automate
@@ -16,9 +17,9 @@ REGISTERS_TO_READ = {
 
 # Définition des registres d'écriture (capteurs)
 REGISTERS_TO_WRITE = {
-    "C1_Capteur1": 160,
-    "C2_Capteur2": 161,
-    "C3_Capteur3": 163
+    "C1_Capteur1": 160,  # Température
+    "C2_Capteur2": 161,  # Vitesse du vent
+    "C3_Capteur3": 163   # Exemple : autre donnée
 }
 
 # Connexion à l'automate
@@ -63,6 +64,28 @@ def write_register_safe(client, address, value):
     return False  # Retourne False si l'écriture échoue
 
 
+def get_last_meteo_data():
+    """
+    Récupère la dernière entrée de la base de données météo.
+    Returns:
+        Tuple (température, vitesse du vent) ou (None, None) en cas d'erreur.
+    """
+    try:
+        conn = sqlite3.connect('/home/btsciel2a/Bureau/Projet_Eolienne/E1_Elio/Code Actuel/BDD_meteo_simu.db')
+        c = conn.cursor()
+        c.execute("SELECT Temperature, VitesseVent FROM meteo ORDER BY DateHeure DESC LIMIT 1")
+        row = c.fetchone()
+        conn.close()
+        if row:
+            return row[0], row[1]  # Température, Vitesse du vent
+        else:
+            print(" Aucune donnée trouvée dans la base de données.")
+            return None, None
+    except Exception as e:
+        print(f" Erreur lors de la récupération des données météo : {e}")
+        return None, None
+
+
 try:
     print(" Connexion à l'automate...")
     if client.connect():  
@@ -83,15 +106,23 @@ try:
                 else:
                     print(f" Impossible de lire {name} ({REGISTERS_TO_READ[name]})")
 
-            # Exemple d'écriture dans les registres des capteurs
-            sensor_values = {
-                "C1_Capteur1": 25,  # Exemple : température en degrés
-                "C2_Capteur2": 5,   # Exemple : inclinaison en degrés
-                "C3_Capteur3": 100  # Exemple : autre donnée si nécessaire 
-            }
+            # Récupération des données météo depuis la base de données
+            temperature, vitesse_vent = get_last_meteo_data()
 
-            for name, value in sensor_values.items():
-                write_register_safe(client, REGISTERS_TO_WRITE[name], value)
+            # Vérification si les valeurs sont valides avant l'écriture
+            if temperature is not None and vitesse_vent is not None:
+                sensor_values = {
+                    "C1_Capteur1": int(temperature),  # Écriture de la température
+                    "C2_Capteur2": int(vitesse_vent),  # Écriture de la vitesse du vent
+                    "C3_Capteur3": 100  # Valeur fixe pour l'exemple
+                }
+
+                # Écriture des valeurs dans l'automate
+                for name, value in sensor_values.items():
+                    write_register_safe(client, REGISTERS_TO_WRITE[name], value)
+
+            else:
+                print(" Données météo invalides, aucune écriture dans l'automate.")
 
             time.sleep(2)  # Attente avant la prochaine lecture
 
@@ -104,4 +135,3 @@ except Exception as e:
 finally:
     client.close()
     print(" Connexion fermée.")
-
