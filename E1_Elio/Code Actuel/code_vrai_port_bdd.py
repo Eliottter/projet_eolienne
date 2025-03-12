@@ -3,7 +3,7 @@ import sqlite3
 import time
 
 # Configuration de l'automate
-AUTOMATE_IP = "172.90.93.91"  # Nouvelle adresse IP
+AUTOMATE_IP = "172.90.93.61"  # Nouvelle adresse IP
 AUTOMATE_PORT = 502
 MAX_RETRIES = 3  # Nombre de tentatives en cas d'échec de lecture/écriture
 
@@ -39,7 +39,7 @@ def read_register_safe(client, address):
         Valeur du registre ou None en cas d'échec.
     """
     for attempt in range(MAX_RETRIES):
-        result = client.read_holding_registers(address, 1)  # Lecture d'un seul registre
+        result = client.read_holding_registers(address)  # Lecture d'un seul registre
         if not result.isError():
             return result.registers[0]  # Retourne la valeur si la lecture est réussie
         print(f" Erreur de lecture au registre {address}. Tentative {attempt+1}/{MAX_RETRIES}")
