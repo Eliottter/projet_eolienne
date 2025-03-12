@@ -73,7 +73,6 @@ def write_register_safe(client, address, value):
     return False  # Retourne False si l'écriture échoue
 
 
-###############
 def convert_orientation_to_degrees(value):
     """
     Convertit une valeur brute du capteur (0-10000) en degrés (0°-360°).
@@ -90,28 +89,26 @@ def convert_orientation_to_degrees(value):
 
     # Définition des plages pour chaque direction
     if 337.5 <= degrees or degrees < 22.5:
-        direction = "Nord (N)"
-    elif 22.5 <= degrees < 67.5:
-        direction = "Nord-Est (NE)"
-    elif 67.5 <= degrees < 112.5:
-        direction = "Est (E)"
-    elif 112.5 <= degrees < 157.5:
-        direction = "Sud-Est (SE)"
-    elif 157.5 <= degrees < 202.5:
         direction = "Sud (S)"
-    elif 202.5 <= degrees < 247.5:
+    elif 22.5 <= degrees < 67.5:
         direction = "Sud-Ouest (SO)"
-    elif 247.5 <= degrees < 292.5:
+    elif 67.5 <= degrees < 112.5:
         direction = "Ouest (O)"
-    elif 292.5 <= degrees < 337.5:
+    elif 112.5 <= degrees < 157.5:
         direction = "Nord-Ouest (NO)"
+    elif 157.5 <= degrees < 202.5:
+        direction = "Nord (N)"
+    elif 202.5 <= degrees < 247.5:
+        direction = "Nord-Est (NE)"
+    elif 247.5 <= degrees < 292.5:
+        direction = "Est (E)"
+    elif 292.5 <= degrees < 337.5:
+        direction = "Sud-Est (SE)"
     else:
         direction = "Inconnu"
 
     return round(degrees, 2), direction  # On arrondit à 2 décimales
-###############
 
-###############
 def convert_vitesse_vent_to_ms(value):
     """
     Convertit une valeur brute de l'anémomètre 
@@ -129,7 +126,6 @@ def convert_vitesse_vent_to_ms(value):
         vitesse = vitesse_conv
 
     return vitesse
-###############
 
 
 try:
@@ -167,10 +163,10 @@ try:
                 "C2_Capteur2": 5,   # Exemple : inclinaison en degrés
                 "C3_Capteur3": 100  # Exemple : autre donnée
             }
-
+##########################################
             # for name, value in sensor_values.items():
             #     write_register_safe(client, REGISTERS_TO_WRITE[name], value)
-
+##########################################
             time.sleep(2)  # Attente avant la prochaine lecture
 
     else:

@@ -9,13 +9,9 @@ MAX_RETRIES = 3  # Nombre de tentatives en cas d'échec de lecture/écriture
 
 # Définition des registres à lire
 REGISTERS_TO_READ = {
-    "Entrees_Carte3": 100,  # Recopie des entrées logiques I0.3 à I0.7
-    "Sorties_Carte3": 120,  # Recopie des sorties logiques Q0.3.16 à Q0.3.23
-    "Sorties_Carte4": 140,  # Recopie des sorties logiques Q0.4.0 à Q0.4.15
+    "Orientation": 150,  # Mesure Analogique orientation du vent
+    "Vitesse_Vent": 152,  #Mesure Analogique Vitesse Vent 
 
-    #"" : 150 # 151 a 152 / Recopie des sortes logiques IW0.5.0 (mesure AN orientation vent ) / IW0.5.2 (mesure AN Vitesse Vent) 
-
-    "Codeur_Nacelle": 28    # Valeur du codeur absolu de la rotation nacelle
 }
 
 # Définition des registres d'écriture (capteurs)
@@ -67,6 +63,60 @@ def write_register_safe(client, address, value):
     return False  # Retourne False si l'écriture échoue
 
 
+
+def convert_orientation_to_degrees(value):
+    """
+    Convertit une valeur brute du capteur (0-10000) en degrés (0°-360°).
+    Args:
+        value (int): Valeur brute du capteur.
+    Returns:
+        tuple: (angle en degrés, direction cardinale)
+    """
+    if value is None:
+        return None, "Valeur invalide"
+
+    # Conversion en degrés (1° ≈ 27.78 unités)
+    degrees = (value / 27.78) % 360  # Normalisation sur 360°
+
+    # Définition des plages pour chaque direction
+    if 337.5 <= degrees or degrees < 22.5:
+        direction = "Sud (S)"
+    elif 22.5 <= degrees < 67.5:
+        direction = "Sud-Ouest (SO)"
+    elif 67.5 <= degrees < 112.5:
+        direction = "Ouest (O)"
+    elif 112.5 <= degrees < 157.5:
+        direction = "Nord-Ouest (NO)"
+    elif 157.5 <= degrees < 202.5:
+        direction = "Nord (N)"
+    elif 202.5 <= degrees < 247.5:
+        direction = "Nord-Est (NE)"
+    elif 247.5 <= degrees < 292.5:
+        direction = "Est (E)"
+    elif 292.5 <= degrees < 337.5:
+        direction = "Sud-Est (SE)"
+    else:
+        direction = "Inconnu"
+
+    return round(degrees, 2), direction  # On arrondit à 2 décimales
+
+
+
+def convert_vitesse_vent_to_ms(value):
+    """
+    Convertit une valeur brute de l'anémomètre 
+    """
+    if value is None:
+        return None, "Valeur invalide"
+    vitesse_conv = value/20
+    if vitesse_conv > 10000/20:
+        vitesse = 0
+    else:
+        vitesse = vitesse_conv
+    return vitesse
+
+
+##############
 def get_last_meteo_data():
     """
     Récupère la dernière entrée de la base de données météo.
@@ -87,7 +137,7 @@ def get_last_meteo_data():
     except Exception as e:
         print(f" Erreur lors de la récupération des données météo : {e}")
         return None, None
-
+##############
 
 try:
     print(" Connexion à l'automate...")
@@ -102,13 +152,20 @@ try:
             for name, reg in REGISTERS_TO_READ.items():
                 values[name] = read_register_safe(client, reg)
 
-            # Affichage des valeurs lues
+            # Affichage des valeurs avec conversion pour l'orientation
             for name, value in values.items():
                 if value is not None:
-                    print(f" {name} ({REGISTERS_TO_READ[name]}) : {value} ({bin(value)})")
+                    if name == "Orientation":  
+                        degrees, direction = convert_orientation_to_degrees(value)
+                        print(f" {name} ({REGISTERS_TO_READ[name]}) : {value}  → {degrees}° → Direction : {direction}")
+                    else:
+                        vitesse = convert_vitesse_vent_to_ms(value)
+                        print(f" {name} ({REGISTERS_TO_READ[name]}) : {value} → {vitesse} m/s")
+                        # print(f" {name} ({REGISTERS_TO_READ[name]}) : {value}m/s ")  # Affichage brut pour vitesse vent
                 else:
                     print(f" Impossible de lire {name} ({REGISTERS_TO_READ[name]})")
 
+##########################################
             # Récupération des données météo depuis la base de données
             temperature, vitesse_vent = get_last_meteo_data()
 
@@ -126,7 +183,7 @@ try:
 
             else:
                 print(" Données météo invalides, aucune écriture dans l'automate.")
-
+##########################################
             time.sleep(2)  # Attente avant la prochaine lecture
 
     else:
