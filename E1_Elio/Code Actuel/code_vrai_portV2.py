@@ -73,6 +73,74 @@ def write_register_safe(client, address, value):
     return False  # Retourne False si l'écriture échoue
 
 
+###############
+def convert_orientation_to_degrees(value):
+    """
+    Convertit une valeur brute du capteur (0-10000) en degrés (0°-360°).
+    Args:
+        value (int): Valeur brute du capteur.
+    Returns:
+        tuple: (angle en degrés, direction cardinale)
+    """
+    if value is None:
+        return None, "Valeur invalide"
+
+    # Conversion en degrés (1° ≈ 27.78 unités)
+    degrees = (value / 27.78) % 360  # Normalisation sur 360°
+
+    # Définition des plages pour chaque direction
+    if 337.5 <= degrees or degrees < 22.5:
+        direction = "Nord (N)"
+    elif 22.5 <= degrees < 67.5:
+        direction = "Nord-Est (NE)"
+    elif 67.5 <= degrees < 112.5:
+        direction = "Est (E)"
+    elif 112.5 <= degrees < 157.5:
+        direction = "Sud-Est (SE)"
+    elif 157.5 <= degrees < 202.5:
+        direction = "Sud (S)"
+    elif 202.5 <= degrees < 247.5:
+        direction = "Sud-Ouest (SO)"
+    elif 247.5 <= degrees < 292.5:
+        direction = "Ouest (O)"
+    elif 292.5 <= degrees < 337.5:
+        direction = "Nord-Ouest (NO)"
+    else:
+        direction = "Inconnu"
+
+    return round(degrees, 2), direction  # On arrondit à 2 décimales
+###############
+
+###############
+def convert_vitesse_vent_to_ms(value):
+    """
+    Convertit une valeur brute de l'anémomètre 
+    
+    Pour 30m/s —> 650 en valeur entière (marge de 25)
+    Pour 20m/s —> 475 en valeur entière (marge de 25)
+    Pour 10m/s —> 75 en valeur entière (marge de 25)
+    Pour 5m/s —> 75 en valeur entière (marge de 25)
+
+    """
+    if value is None:
+        return None, "Valeur invalide"
+
+    # Définition des plages pour chaque direction
+    if value == 0:
+        vitesse = 0
+    elif 0 < value < 50:
+        vitesse = 5
+    elif 50 <= value < 150:
+        vitesse = 10
+    elif 150 <= value < 500:
+        vitesse = 20
+    elif 500 <= value < 700:
+        vitesse = 30
+
+    return vitesse
+###############
+
+
 try:
     print(" Connexion à l'automate...")
     if client.connect():  
@@ -86,12 +154,20 @@ try:
             for name, reg in REGISTERS_TO_READ.items():
                 values[name] = read_register_safe(client, reg)
 
-            # Affichage des valeurs lues
-            for name, value in values.items():
-                if value is not None:
-                    print(f" {name} ({REGISTERS_TO_READ[name]}) : {value} ")
+
+        # Affichage des valeurs avec conversion pour l'orientation
+        for name, value in values.items():
+            if value is not None:
+                if name == "Orientation":  
+                    degrees, direction = convert_orientation_to_degrees(value)
+                    print(f" {name} ({REGISTERS_TO_READ[name]}) : {value}  → {degrees}° → Direction : {direction}")
                 else:
-                    print(f" Impossible de lire {name} ({REGISTERS_TO_READ[name]})")
+                    vitesse = convert_vitesse_vent_to_ms(value)
+                    print(f" {name} ({REGISTERS_TO_READ[name]}) : {value} → {vitesse} m/s")
+                    # print(f" {name} ({REGISTERS_TO_READ[name]}) : {value}m/s ")  # Affichage brut pour vitesse vent
+            else:
+                print(f" Impossible de lire {name} ({REGISTERS_TO_READ[name]})")
+
 
 
             # Exemple d'écriture dans les registres des capteurs
