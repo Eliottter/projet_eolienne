@@ -103,7 +103,7 @@ try:
             # for name, value in sensor_values.items():
             #     write_register_safe(client, REGISTERS_TO_WRITE[name], value)
 
-            time.sleep(2)  # Attente avant la prochaine lecture
+            time.sleep(200)  # Attente avant la prochaine lecture
 
     else:
         print(" Échec de la connexion.")
