@@ -10,12 +10,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            background-color: #f8f9fa;
+            background: url('FondEcranLogin.png') no-repeat center center fixed;
+            background-size: cover;
             display: flex;
             flex-direction: column;
-            min-height: 100vh; /* Assure que le body prend toute la hauteur */
+            min-height: 100vh;
             margin: 0;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
+
 
         main {
             flex: 1; /* Permet au contenu de prendre l'espace restant sous l'en-tête */
@@ -41,7 +46,7 @@
             background-color: #e9ecef;
             color: black;
             border: none;
-            margin-bottom: 1rem;
+            margin-bottom: 1rem;   /* Ajoute un espace entre les éléments */
         }
         .form-control:focus {
             background-color: #ffffff;
@@ -72,13 +77,13 @@
 
 
     <body>
-    <!-- Formulaire de Connexion -->
+    <!-- Bloc de Connexion -->
     <main>
         <div class="login-container mt-4">
-            <h1>Connectez-vous !!</h1>
+            <h1>Connectez-vous</h1>
             <form action="#">
                 <input type="text" class="form-control" placeholder="Identifiant" required>
-                <input type="password" class="form-control" placeholder="Mot de passe" required>
+                <input type="passw  ord" class="form-control" placeholder="Mot de passe" required>
                 <button type="submit" class="btn-login">Connexion</button>
             </form>
         </div>
