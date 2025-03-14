@@ -1,3 +1,8 @@
+"""
+Ce script permet de lire les valeurs de l'orientation du vent et de la vitesse du vent 
+(Anémomètre et Girouette)
+"""
+
 from pymodbus.client import ModbusTcpClient as ModbusClient
 import time
 
@@ -31,26 +36,6 @@ def read_register_safe(client, address):
         print(f" Erreur de lecture au registre {address}. Tentative {attempt+1}/{MAX_RETRIES}")
         time.sleep(1)  # Pause avant de réessayer
     return None  # Retourne None si la lecture échoue après toutes les tentatives
-
-
-def write_register_safe(client, address, value):
-    """
-    Fonction pour tenter plusieurs fois d'écrire une valeur dans un registre.
-    Args:
-        client: Instance de ModbusTcpClient.
-        address: Adresse du registre à écrire.
-        value: Valeur à écrire.
-    Returns:
-        True si l'écriture est réussie, False sinon.
-    """
-    for attempt in range(MAX_RETRIES):
-        result = client.write_register(address, value)
-        if not result.isError():
-            print(f" Écriture réussie : {value} → registre {address}")
-            return True
-        print(f" Erreur d'écriture au registre {address}. Tentative {attempt+1}/{MAX_RETRIES}")
-        time.sleep(1)
-    return False  # Retourne False si l'écriture échoue
 
 
 def convert_orientation_to_degrees(value):

@@ -100,7 +100,7 @@ def main():
             # Publier les données sur le topic MQTT
             client.publish(TOPIC, str(donnee_meteo))
         
-        time.sleep(6)  # Attendre 60 secondes avant de récupérer de nouvelles données
+        time.sleep(5)  # Attendre 5 secondes avant de récupérer de nouvelles données
 
 if __name__ == "__main__":
     main()
