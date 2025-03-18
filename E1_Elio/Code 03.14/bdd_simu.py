@@ -48,7 +48,7 @@ def send_to_web_server(data):
 
 # Configuration de la base de données
 def setup_database():
-    conn = sqlite3.connect('/home/btsciel2a/Bureau/Projet_Eolienne/E1_Elio/Code actuel/BDD_meteo_simu.db') # Chemin de la base de données !!!!!!!!!
+    conn = sqlite3.connect('/home/btsciel2a/Bureau/Projet_Eolienne/E1_Elio/Code 03.14/BDD_meteo_simu.db') # Chemin de la base de données !!!!!!!!!
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS meteo
                  (DateHeure TIMESTAMP, VitesseVent REAL, Temperature REAL, DirectionVent FLOAT, DirectionVent1 FLOAT)''') 
@@ -56,7 +56,7 @@ def setup_database():
     conn.close()
 
 def insert_donnee_meteo(vitesseVent, temperature, DirectionVent, DirectionVent1):
-    conn = sqlite3.connect('/home/btsciel2a/Bureau/Projet_Eolienne/E1_Elio/Code actuel/BDD_meteo_simu.db') # Chemin de la base de données !!!!!!!!!
+    conn = sqlite3.connect('/home/btsciel2a/Bureau/Projet_Eolienne/E1_Elio/Code 03.14/BDD_meteo_simu.db') # Chemin de la base de données !!!!!!!!!
     c = conn.cursor()
     # Insertion des données dans la base de données
     c.execute("INSERT INTO meteo (DateHeure, VitesseVent, Temperature, DirectionVent, DirectionVent1) VALUES (datetime('now'), ?, ?, ?, ?)",
