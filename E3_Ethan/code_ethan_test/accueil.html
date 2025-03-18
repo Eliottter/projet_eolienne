@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervision Météorologique</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .synoptique {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .compass-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .compass-image {
+            width: 300px;
+            height: 300px;
+            transition: transform 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-primary text-white text-center p-3">
+        <h1>Supervision Météorologique</h1>
+        <a href="login.html" target="_blank" class="btn btn-primary btn-lg">Se Déconnecter</a>
+    </header>
+
+    <!-- Contenu principal -->
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Colonne gauche : Synoptique -->
+            <div class="col-md-4 synoptique">
+                <h2>Synoptique</h2>
+                <p>Affichage des états en temps réel.</p>
+                <ul>
+                    <li>Vitesse du vent : <span id="vent">0</span> km/h</li>
+                    <li>Température : <span id="temperature">0</span> °C</li>
+                    <li>Direction du vent (texte) : <span id="direction">N</span></li>
+                    <li>Direction du vent (degrés) : <span id="directionDegrees">0</span>°</li>
+                </ul>
+
+                <!-- Section boussole -->
+                <div class="compass-container">
+                    <h2>Boussole</h2>
+                    <p>Direction actuelle du vent : <span id="directionText">N</span></p>
+                    <img src="/assets/compass-dark.png" alt="Boussole" class="compass-image" id="compassImage">
+                </div>
+            </div>
+
+            <!-- Colonne droite : Graphiques et Données -->
+            <div class="col-md-8">
+                <h2>Données en temps réel</h2>
+                <canvas id="graphique"></canvas>
+
+                <!-- Affichage des données stockées -->
+                <h2 class="mt-4">Historique des relevés</h2>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Température (°C)</th>
+                            <th>Vitesse du vent (km/h)</th>
+                            <th>Direction</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const socket = new WebSocket('ws://10.160.120.89:3000');
+        const lineChartCtx = document.getElementById('graphique').getContext('2d');
+
+        const myChart = new Chart(lineChartCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Vitesse du vent (km/h)',
+                    data: [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    tension: 0.1
+                }]
+            }
+        });
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            updateUI(data);
+        };
+
+        function updateUI(data) {
+            document.getElementById('vent').innerText = data.vitesseVent;
+            document.getElementById('temperature').innerText = data.temperature;
+            document.getElementById('direction').innerText = data.directionVent1;
+            document.getElementById('directionText').innerText = data.directionVent1;
+            document.getElementById('directionDegrees').innerText = data.directionVent;
+
+            updateCompass(data.directionVent);
+            updateChart(data.vitesseVent);
+        }
+
+        function updateCompass(directionAngle) {
+            document.getElementById('compassImage').style.transform = `rotate(${directionAngle}deg)`;
+        }
+
+        function updateChart(vitesseVent) {
+            const currentTime = new Date().toLocaleTimeString();
+            myChart.data.labels.push(currentTime);
+            myChart.data.datasets[0].data.push(vitesseVent);
+
+            if (myChart.data.labels.length > 10) {
+                myChart.data.labels.shift();
+                myChart.data.datasets[0].data.shift();
+            }
+
+            myChart.update();
+        }
+
+        function fetchData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('dataTable');
+                    tableBody.innerHTML = '';
+                    data.forEach(entry => {
+                        const row = `<tr>
+                            <td>${entry.date}</td>
+                            <td>${entry.temperature}</td>
+                            <td>${entry.vitesseVent}</td>
+                            <td>${entry.direction}</td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                })
+                .catch(error => console.error('Erreur de chargement des données:', error));
+        }
+
+        fetchData();
+        setInterval(fetchData, 10000);
+    </script>
+</body>
+</html>
