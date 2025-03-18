@@ -2,7 +2,7 @@ import requests
 import paho.mqtt.client as mqtt
 import time
 import sqlite3
-
+#fzefrrrgggquherhrguhzeguzgh
 # Configuration
 BROKER_ADDRESS = "broker.hivemq.com"
 TOPIC = "weather/data"
