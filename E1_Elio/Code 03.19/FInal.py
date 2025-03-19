@@ -44,10 +44,40 @@ def write_register_safe(client, address, value):
     return False
 
 def convert_orientation_to_degrees(value):
+    """
+    Convertit une valeur brute du capteur (0-10000) en degrés (0°-360°).
+    Args:
+        value (int): Valeur brute du capteur.
+    Returns:
+        tuple: (angle en degrés, direction cardinale)
+    """
     if value is None:
         return None, "Valeur invalide"
-    degrees = (value / 27.78) % 360
-    return round(degrees, 2)
+
+    # Conversion en degrés (1° ≈ 27.78 unités)
+    degrees = (value / 27.78) % 360  # Normalisation sur 360°
+
+    # Définition des plages pour chaque direction
+    if 337.5 <= degrees or degrees < 22.5:
+        direction = "Sud (S)"
+    elif 22.5 <= degrees < 67.5:
+        direction = "Sud-Ouest (SO)"
+    elif 67.5 <= degrees < 112.5:
+        direction = "Ouest (O)"
+    elif 112.5 <= degrees < 157.5:
+        direction = "Nord-Ouest (NO)"
+    elif 157.5 <= degrees < 202.5:
+        direction = "Nord (N)"
+    elif 202.5 <= degrees < 247.5:
+        direction = "Nord-Est (NE)"
+    elif 247.5 <= degrees < 292.5:
+        direction = "Est (E)"
+    elif 292.5 <= degrees < 337.5:
+        direction = "Sud-Est (SE)"
+    else:
+        direction = "Inconnu"
+
+    return round(degrees, 2), direction  # On arrondit à 2 décimales
 
 def convert_vitesse_vent_to_ms(value):
     if value is None:
