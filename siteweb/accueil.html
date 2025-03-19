@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supervision Éolienne</title>
+    <title>Supervision Météorologique</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js -->
@@ -14,16 +14,23 @@
             border-radius: 10px;
             padding: 15px;
         }
+
+        .compass-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .compass-image {
+            width: 300px;
+            height: 300px;
+            transition: transform 0.5s ease-in-out;
+        }
     </style>
-    
 </head>
 <body>
-    <!-- En-tête -->
-    <header class="bg-primary text-white text-center p-3"> 
-        <h1>Supervision Éolienne</h1>
-        <div class="text-end mt-4"></div>
-            <a href="login.html" target="_blank" class="btn btn-primary btn-lg">Se Déconnecter</a>
-        </div>
+    <header class="bg-primary text-white text-center p-3">
+        <h1>Supervision Météorologique</h1>
+        <a href="login.html" target="_blank" class="btn btn-primary btn-lg">Se Déconnecter</a>
     </header>
 
     <!-- Contenu principal -->
@@ -34,130 +41,109 @@
                 <h2>Synoptique</h2>
                 <p>Affichage des états en temps réel.</p>
                 <ul>
-                    <li>Angle du vent : <span id="angle">45°</span></li>
-                    <li>Vitesse du vent : <span id="vent">0</span></li>
+                    <li>Vitesse du vent : <span id="vent">0</span> km/h</li>
+                    <li>Température : <span id="temperature">0</span> °C</li>
+                    <li>Direction du vent (texte) : <span id="direction">N</span></li>
+                    <li>Direction du vent (degrés) : <span id="directionDegrees">0</span>°</li>
                 </ul>
+
                 <!-- Section boussole -->
-                <div class="synoptique mt-4">
+                <div class="compass-container">
                     <h2>Boussole</h2>
-                    <p>Direction actuelle du vent : <span id="direction">N</span></p>
-                    <img src="compass-dark.png" alt="Boussole" style="width: 300px; height: 300px;">
+                    <p>Direction actuelle du vent : <span id="directionText">N</span></p>
+                    <img src="/assets/compass-dark.png" alt="Boussole" class="compass-image" id="compassImage">
                 </div>
             </div>
 
-            <!-- Colonne droite : Graphiques -->
+            <!-- Colonne droite : Graphiques et Données -->
             <div class="col-md-8">
                 <h2>Données en temps réel</h2>
                 <canvas id="graphique"></canvas>
+
+                    
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script>
-        // Fonctionnalité boussole
-        function getRandomDirection() {
-            const directions = ['Nord', 'Nord-Est', 'Est', 'Sud-Est', 'Sud', 'Sud-Ouest', 'Ouest', 'Nord-Ouest'];
-            return directions[Math.floor(Math.random() * directions.length)]; // Retourne une direction aléatoire
-        }
-        // Fonction qui donne un angle en degrés en fonction de la direction
-        function getDirectionAngle(direction) {
-            switch (direction) {
-                case 'Nord':
-                    return 0;
-                case 'Nord-Est':
-                    return 315;
-                case 'Est':
-                    return 270;
-                case 'Sud-Est':
-                    return 225;
-                case 'Sud':
-                    return 180;
-                case 'Sud-Ouest':
-                    return 135;
-                case 'Ouest':
-                    return 90;
-                case 'Nord-Ouest':
-                    return 45;
-                default:
-                    return 0;
-            }
-        }
-
-        function updateCompass() {
-            const direction = getRandomDirection();
-            const angle = getDirectionAngle(direction);
-
-            // Mettre à jour le texte de la direction
-            document.getElementById('direction').innerText = direction;
-            document.getElementById('angle').innerText = angle;
-
-            // Faire tourner l'image de la boussole
-            const compassImage = document.querySelector('img[alt="Boussole"]');// Récupère l'image de la boussole
-            //compassImage.style.transform = `rotate(${angle}deg)`;// Fait tourner l'image de la boussole avec un angle en degrés
-        }
-
-        // Mettre à jour la boussole toutes les 5 secondes
-        setInterval(updateCompass, 5000);
-    </script>
-    <script>
-        // Base de graphique avec Chart.js
+        const socket = new WebSocket('ws://10.160.120.89:3000');
         const lineChartCtx = document.getElementById('graphique').getContext('2d');
 
-        // Graphique linéaire
         const myChart = new Chart(lineChartCtx, {
             type: 'line',
             data: {
                 labels: [],
                 datasets: [{
                     label: 'Vitesse du vent (km/h)',
-                    data: [0, 20, 40, 60, 80, 100, 120],
+                    data: [],
                     borderColor: 'rgba(75, 192, 192, 1)',
                     tension: 0.1
                 }]
             }
         });
 
-        // Fonction pour obtenir une vitesse de vent aléatoire
-        function getRandomWindSpeed() {
-            return Math.floor(Math.random() * 121);
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            updateUI(data);
+        };
+
+        function updateUI(data) {
+            document.getElementById('vent').innerText = data.vitesseVent;
+            document.getElementById('temperature').innerText = data.temperature;
+            document.getElementById('direction').innerText = data.directionVent1;
+            document.getElementById('directionText').innerText = data.directionVent1;
+            document.getElementById('directionDegrees').innerText = data.directionVent;
+
+            updateCompass(data.directionVent);
+            updateChart(data.vitesseVent);
         }
 
-        // Fonction pour mettre à jour le graphique
-        function updateChart() {
-            const newSpeed = getRandomWindSpeed();
+        function updateCompass(directionAngle) {
+            document.getElementById('compassImage').style.transform = `rotate(${directionAngle}deg)`;
+        }
+
+        function updateChart(vitesseVent) {
             const currentTime = new Date().toLocaleTimeString();
-            document.getElementById('vent').innerText = newSpeed;
-
-            // Ajouter les nouvelles données au graphique
             myChart.data.labels.push(currentTime);
-            myChart.data.datasets[0].data.push(newSpeed);
+            myChart.data.datasets[0].data.push(vitesseVent);
 
-            // Limiter le nombre de points sur le graphique
             if (myChart.data.labels.length > 10) {
                 myChart.data.labels.shift();
                 myChart.data.datasets[0].data.shift();
             }
 
-            // Mettre à jour le graphique
             myChart.update();
         }
 
-        // Mettre à jour le graphique toutes les 5 secondes
-        setInterval(updateChart, 5000);
-    </script>   
+        function fetchData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('dataTable');
+                    tableBody.innerHTML = '';
+                    data.forEach(entry => {
+                        const row = `<tr>
+                            <td>${entry.date}</td>
+                            <td>${entry.temperature}</td>
+                            <td>${entry.vitesseVent}</td>
+                            <td>${entry.direction}</td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                })
+                .catch(error => console.error('Erreur de chargement des données:', error));
+        }
+
+        fetchData();
+        setInterval(fetchData, 10000);
+    
+    </script>
+
     <div class="text-center mt-4">
         <a href="bdd.html" target="_blank" class="btn btn-primary btn-lg">Accéder à la Base de Données</a>
-        <button id="exportCSV">Exporter en CSV</button>
-<script>
-        document.getElementById("exportCSV").addEventListener("click", function() {
-            window.location.href = "/export-csv";
-        });
-        </script>
     </div>
-    
-        
-</div>
+
 
 </body>
 </html>
