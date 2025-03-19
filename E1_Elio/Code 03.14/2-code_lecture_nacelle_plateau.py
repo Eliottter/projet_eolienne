@@ -15,7 +15,6 @@ REGISTERS_TO_READ = {
     "Nacelle": ???,  # Mesure Analogique de la position de la Nacelle
     "Plateau": ???,  #Mesure Analogique de la position du Plateau girouette
 }
-
 # Connexion à l'automate
 client = ModbusClient(host=AUTOMATE_IP, port=AUTOMATE_PORT)
 

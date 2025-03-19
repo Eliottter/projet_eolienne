@@ -24,7 +24,7 @@ try:
 
         for i in range(3):
                 ### Écriture dans le registre 160
-            valeur_a_ecrire = 1# Mettre la valeur que l'on veux écrire
+            valeur_a_ecrire = i# Mettre la valeur que l'on veux écrire
             port_utiliser = 160+i
 
             write_result = client.write_register(port_utiliser, valeur_a_ecrire)
@@ -36,7 +36,7 @@ try:
 
             valeur_lue = client.read_holding_registers(160+i).registers[0]
             print(f"Valeur lue : {valeur_lue} ({bin(valeur_lue)})")
-            time.sleep(10)
+            time.sleep(1)
 
     else:
         print("Échec de la connexion.")
