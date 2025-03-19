@@ -22,7 +22,7 @@
     <header class="bg-primary text-white text-center p-3"> 
         <h1>Supervision Éolienne</h1>
         <div class="text-end mt-4"></div>
-            <a href="login.html" target="_blank" class="btn btn-primary btn-lg">Se Connecter</a>
+            <a href="login.html" target="_blank" class="btn btn-primary btn-lg">Se Déconnecter</a>
         </div>
     </header>
 
@@ -148,8 +148,15 @@
     </script>   
     <div class="text-center mt-4">
         <a href="bdd.html" target="_blank" class="btn btn-primary btn-lg">Accéder à la Base de Données</a>
+        <button id="exportCSV">Exporter en CSV</button>
+<script>
+        document.getElementById("exportCSV").addEventListener("click", function() {
+            window.location.href = "/export-csv";
+        });
+        </script>
     </div>
     
+        
 </div>
 
 </body>

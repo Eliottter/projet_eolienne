@@ -21,6 +21,26 @@
         <header class="bg-primary text-white text-center p-3"> 
             <h1>Base de Données</h1>
         </header>
+        <!-- Affichage des données stockées -->
+        <h2 class="mt-4 text-center p-3">Historique des relevés</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Température (°C)</th>
+                    <th>Vitesse du vent (km/h)</th>
+                    <th>Direction</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+            </tbody>
+        </table>
+        <button id="exportCSV">Exporter en CSV</button>
 
+        <script>
+        document.getElementById("exportCSV").addEventListener("click", function() {
+            window.location.href = "/export-csv";
+        });
+        </script>
 </body>
 </html>
