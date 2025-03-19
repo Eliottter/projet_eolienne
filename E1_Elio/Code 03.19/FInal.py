@@ -9,10 +9,10 @@ MAX_RETRIES = 3  # Nombre de tentatives en cas d'échec de lecture/écriture
 
 # Définition des registres
 REGISTERS_TO_READ = {
-    "Orientation": 150,
-    "VitesseVent": 152,
-    "Temperature": 160,
-    "DirectionVent": 163
+    "Orientation": 150, # Mesure Analogique orientation du vent
+    "VitesseVent": 152, # Mesure Analogique Vitesse Vent
+    "Temperature": 160, # Température
+    "DirectionVent": 163 # Direction du vent
 }
 
 REGISTERS_TO_WRITE = {
