@@ -11,7 +11,7 @@ AUTOMATE_IP = "172.90.93.61"  # Nouvelle adresse IP
 AUTOMATE_PORT = 502
 MAX_RETRIES = 3  # Nombre de tentatives en cas d'échec de lecture/écriture
 
-# Définition des registres à lire V2
+# Définition des registres à lire 
 REGISTERS_TO_READ = {
     "Orientation": 150,  # Mesure Analogique orientation du vent
     "Vitesse_Vent": 152,  #Mesure Analogique Vitesse Vent 
@@ -93,7 +93,7 @@ try:
     if client.connect():  
         print(" Connexion réussie.")
 
-        for i in range(100):  # Boucle de lecture sur 5 cycles
+        for i in range(100):  # Boucle de lecture sur 100 cycles
             print(f"\n Lecture du cycle {i+1}")
 
             # Lire chaque registre défini dans REGISTERS_TO_READ

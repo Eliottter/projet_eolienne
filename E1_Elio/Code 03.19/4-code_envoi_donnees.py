@@ -1,24 +1,26 @@
+# Chemin PC portable /home/ciel/Bureau/Elio_projet/BDD_meteo_simu.db
+# Chemin PC fixe /home/btsciel2a/Bureau/Projet_Eolienne/E1_Elio/Code 03.19/BDD_meteo_simu.db
 from pymodbus.client import ModbusTcpClient as ModbusClient
 import sqlite3
 import time
 
 # Configuration de l'automate
-AUTOMATE_IP = "172.90.93.62"  # Nouvelle adresse IP
+AUTOMATE_IP = "172.90.93.61"  # Nouvelle adresse IP
 AUTOMATE_PORT = 502
 MAX_RETRIES = 3  # Nombre de tentatives en cas d'échec de lecture/écriture
 
 # Définition des registres à lire
 REGISTERS_TO_READ = {
-    "VitesseVent": 160, # Température écrite par le capteur 1
-    "Temperature": 161, # Inclinaison écrite par le capteur 2
-    "DirectionVent": 162 # Test donnée aléatoire écrite par le capteur 3
+    "Temperature": 160, # Température écrite sur le registre 160
+    "VitesseVent": 161, # Vitesse du vent écrite sur le registre 161
+    "DirectionVent": 163 # Direction du vent écrite sur le registre 163
 }
 
-# Définition des registres d'écriture (capteurs)
+# Définition des registres d'écriture (libre pour écrire)
 REGISTERS_TO_WRITE = {
-    "registre1": 160,  # Température
-    "registre2": 161,  # Inclinaison
-    "registre3": 162   # Test donnée aléatoire
+    "C1_Capteur1": 160,  # Température
+    "C2_Capteur2": 161,  # Vitesse du vent
+    "C3_Capteur3": 163   # Direction du vent
 }
 
 # Connexion à l'automate
@@ -71,13 +73,13 @@ def get_last_meteo_data():
         Tuple (température, vitesse du vent) ou (None, None) en cas d'erreur.
     """
     try:
-        conn = sqlite3.connect('/home/btsciel2a/Bureau/Projet_Eolienne/E1_Elio/Code 03.14/BDD_meteo_simu.db') # Chemin de la base de données !!!!!!!!!
+        conn = sqlite3.connect('/home/ciel/Bureau/Elio_projet/BDD_meteo_simu.db') # Chemin de la base de données !!!!!!!!!
         c = conn.cursor()
-        c.execute("SELECT VitesseVent, Temperature, DirectionVent FROM meteo ORDER BY DateHeure DESC LIMIT 1")
+        c.execute("SELECT Temperature, VitesseVent, DirectionVent FROM meteo ORDER BY DateHeure DESC LIMIT 1") # Selection des données depuis la base de données
         row = c.fetchone()
         conn.close()
         if row:
-            return row[0], row[1], row[2]  # Température, Vitesse du vent
+            return row[0]*10, row[1]*10, row[2]  # Température, Vitesse du vent, Direction du vent
         else:
             print(" Aucune donnée trouvée dans la base de données.")
             return None, None, None
@@ -108,16 +110,16 @@ try:
                 else:
                     print(f" Impossible de lire {name} ({REGISTERS_TO_READ[name]})")
 
-##########################################  
+##########################################
             # Récupération des données météo depuis la base de données
-            temperature, vitesse_vent, directionvent = get_last_meteo_data()
+            temperature, vitesse_vent, directionVent = get_last_meteo_data()
 
             # Vérification si les valeurs sont valides avant l'écriture
-            if temperature is not None and vitesse_vent is not None and directionvent is not None:
+            if temperature is not None and vitesse_vent is not None and directionVent:
                 sensor_values = {
-                    "registre1": int(temperature),   # Écriture de la température
-                    "registre2": int(vitesse_vent),  # Écriture de la vitesse du vent
-                    "registre3": int(directionvent)  # Valeur fixe pour l'exemple
+                    "C1_Capteur1": int(temperature),   # Écriture de la température
+                    "C2_Capteur2": int(vitesse_vent),  # Écriture de la vitesse du vent
+                    "C3_Capteur3": int(directionVent)  # Ecriture de la direction du vent
                 }
 
                 # Écriture des valeurs dans l'automate
@@ -139,3 +141,13 @@ except Exception as e:
 finally:
     client.close()
     print(" Connexion fermée.")
+
+
+"""
+- envoyer les infos avec broker 
+- dire des modif a apporté au données écrite (diviser par 10 pour l'affichage correcte ) par mail mais que un fois que tout sera vraiment pret quoi 
+- pour la nacelle pas possible pour le moment car kc, elle sera probablemetn simuler par autre chose donc avec voir quand ce sera possible 
+- il y aura aussi l'ajout d'un écran pour afficher les donnée que j'aurais écrite (les données de Corentin) directement sur un écran 
+un écran qui sera mis en place par le M Boucher (pour render le truc plus concret quoi)
+- Enfin OPTIONELLE, l'ajout de l'écran pour un affichage plus concret mais j'suis vraiment pas sur que ça ce fasse....
+"""

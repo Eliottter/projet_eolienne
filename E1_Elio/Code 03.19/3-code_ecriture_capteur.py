@@ -1,3 +1,6 @@
+### ATTENTION CE PROGRAMME N'EST PAS FINI ET UTILISE DES REGISTRE DEJA UTILISES DANS LE PROGRAMME ENVOIE DE DONNEES ####
+### TROUVER D'AUTRE REGISTRE POUR LES CAPTEURS ####
+
 from pymodbus.client import ModbusTcpClient as ModbusClient
 import sqlite3
 import time
@@ -11,14 +14,12 @@ MAX_RETRIES = 3  # Nombre de tentatives en cas d'échec de lecture/écriture
 REGISTERS_TO_READ = {
     "Temperature": 160, # Température écrite par le capteur 1
     "Inclinaison": 161, # Inclinaison écrite par le capteur 2
-    "Test": 163         # Test donnée aléatoire écrite par le capteur 3
 }
 
 # Définition des registres d'écriture (capteurs)
 REGISTERS_TO_WRITE = {
-    "C1_Capteur1": 160,  # Température
-    "C2_Capteur2": 161,  # Inclinaison
-    "C3_Capteur3": 163   # Test donnée aléatoire
+    "registre1": 160,  # Température
+    "registre2": 161,  # Inclinaison
 }
 
 # Connexion à l'automate
@@ -73,11 +74,11 @@ def get_last_meteo_data():
     try:
         conn = sqlite3.connect('/home/btsciel2a/Bureau/Projet_Eolienne/E1_Elio/Code 03.14/BDD_meteo_simu.db') # Chemin de la base de données !!!!!!!!!
         c = conn.cursor()
-        c.execute("SELECT VitesseVent, Temperature FROM meteo ORDER BY DateHeure DESC LIMIT 1")
+        c.execute("SELECT VitesseVent, Temperature, DirectionVent FROM meteo ORDER BY DateHeure DESC LIMIT 1")
         row = c.fetchone()
         conn.close()
         if row:
-            return row[0], row[1]  # Température, Vitesse du vent
+            return row[0], row[1]  # Température, Inclinaison
         else:
             print(" Aucune donnée trouvée dans la base de données.")
             return None, None
@@ -108,16 +109,16 @@ try:
                 else:
                     print(f" Impossible de lire {name} ({REGISTERS_TO_READ[name]})")
 
-##########################################
+##########################################  
+
             # Récupération des données météo depuis la base de données
-            temperature, vitesse_vent = get_last_meteo_data()
+            temperature, vitesse_vent, directionvent = get_last_meteo_data()
 
             # Vérification si les valeurs sont valides avant l'écriture
             if temperature is not None and vitesse_vent is not None:
                 sensor_values = {
-                    "C1_Capteur1": int(temperature),   # Écriture de la température
-                    "C2_Capteur2": int(vitesse_vent),  # Écriture de la vitesse du vent
-                    "C3_Capteur3": i                 # Valeur fixe pour l'exemple
+                    "registre1": int(temperature),   # Écriture de la température
+                    "registre2": int(vitesse_vent),  # Écriture de la inclinaison
                 }
 
                 # Écriture des valeurs dans l'automate
