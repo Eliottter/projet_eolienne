@@ -109,10 +109,10 @@ try:
                 if value is not None:
                     if name == "Orientation":
                         degrees = convert_orientation_to_degrees(value)
-                        print(f"{name} : {value} → {degrees}°")
+                        print(f"{name} : {value} → {degrees}")
                     elif name == "VitesseVent":
                         vitesse = convert_vitesse_vent_to_ms(value)
-                        print(f"{name} : {value} → {vitesse} m/s")
+                        print(f"{name} : {value} → {vitesse} m/s\n")
                     else:
                         print(f"{name} : {value}")
                 else:
