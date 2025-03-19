@@ -34,6 +34,15 @@ def read_register_safe(client, address):
     return None
 
 def write_register_safe(client, address, value):
+    """
+    Fonction pour tenter plusieurs fois d'écrire dans un registre.
+    Args:
+        client: Instance de ModbusTcpClient.
+        address: Adresse du registre à écrire.
+        value: Valeur à écrire.
+    Returns:
+        bool: True si l'écriture est réussie, False sinon
+    """
     for attempt in range(MAX_RETRIES):
         result = client.write_register(address, value)
         if not result.isError():
@@ -80,15 +89,27 @@ def convert_orientation_to_degrees(value):
     return round(degrees, 2), direction  # On arrondit à 2 décimales
 
 def convert_vitesse_vent_to_ms(value):
+    """
+    Convertit une valeur brute du capteur (0-10000) en m/s.
+    Args:
+        value (int): Valeur brute du capteur.
+    Returns:
+        float: Vitesse du vent en m/s.
+    """
     if value is None:
         return None
     return value / 20 if value / 20 <= 10000/20 else 0
 
 def get_last_meteo_data():
+    """
+    Récupère les dernières données météo de la base de données. 
+    Returns:
+        tuple: Température (°C*10), vitesse du vent (m/s*10), direction du vent (degrés).
+    """
     try:
-        conn = sqlite3.connect('/home/ciel/Bureau/Elio_projet/BDD_meteo_simu.db')
+        conn = sqlite3.connect('/home/ciel/Bureau/Elio_projet/BDD_meteo_simu.db') # ATTENTION Chemin à modifier en fonction de l'emplacement de la base de données 
         c = conn.cursor()
-        c.execute("SELECT Temperature, VitesseVent, DirectionVent FROM meteo ORDER BY DateHeure DESC LIMIT 1")
+        c.execute("SELECT Temperature, VitesseVent, DirectionVent FROM meteo ORDER BY DateHeure DESC LIMIT 1") # selection temperature, vitesse vent, direction vent
         row = c.fetchone()
         conn.close()
         if row:
@@ -97,36 +118,44 @@ def get_last_meteo_data():
         print(f"Erreur lors de la récupération des données météo : {e}")
     return None, None, None
 
+
+
+"""
+    Code principal
+"""
 try:
-    print("Connexion à l'automate...")
-    if client.connect():
+    print("Connexion à l'automate...") # Connexion à l'automate
+    if client.connect(): 
         print("Connexion réussie.")
-        for i in range(100):
+        for i in range(100): # Boucle "infinie"
             print(f"\nLecture du cycle {i+1}")
+            # Lecture des registres dans REGISTERS_TO_READ
             values = {name: read_register_safe(client, reg) for name, reg in REGISTERS_TO_READ.items()}
             
-            for name, value in values.items():
+            # Affichage des valeurs lues avec conversion si nécessaire
+            for name, value in values.items(): # Affichage des valeurs lues
                 if value is not None:
-                    if name == "Orientation":
+                    if name == "Orientation": # Conversion de l'orientation
                         degrees = convert_orientation_to_degrees(value)
                         print(f"{name} : {value} → {degrees}")
                     elif name == "VitesseVent":
                         vitesse = convert_vitesse_vent_to_ms(value)
-                        print(f"{name} : {value} → {vitesse} m/s\n")
+                        print(f"{name} : {value} → {vitesse} m/s\n") # Conversion de la vitesse du vent
                     else:
                         print(f"{name} : {value}")
                 else:
                     print(f"Impossible de lire {name}")
             
+            # Écriture des valeurs météo dans l'automate
             temperature, vitesse_vent, directionVent = get_last_meteo_data()
             if temperature is not None and vitesse_vent is not None and directionVent is not None:
                 sensor_values = {
-                    "C1_Capteur1": int(temperature),
+                    "C1_Capteur1": int(temperature), 
                     "C2_Capteur2": int(vitesse_vent),
                     "C3_Capteur3": int(directionVent)
                 }
                 for name, value in sensor_values.items():
-                    write_register_safe(client, REGISTERS_TO_WRITE[name], value)
+                    write_register_safe(client, REGISTERS_TO_WRITE[name], value) # Écriture des valeurs dans l'automate
             else:
                 print("Données météo invalides, aucune écriture dans l'automate.")
             
@@ -139,3 +168,6 @@ except Exception as e:
 finally:
     client.close()
     print("Connexion fermée.")
+
+# if __name__ == "__main__":
+#     pass
