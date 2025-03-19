@@ -25,21 +25,28 @@ app.use(session({
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: true })); // Pour récupérer les données de formulaire
 
-// Page de login
+// Page de login ou redirection vers accueil si déjà connecté
 app.get('/', (req, res) => {
+    if (req.session.user) {
+        // Si l'utilisateur est déjà connecté, redirige vers la page d'accueil
+        return res.redirect('/accueil.html');
+    }
+    // Sinon, affiche la page de login
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 // Gestion de l'authentification
-app.post('/login', express.urlencoded({ extended: true }), (req, res) => {
+app.post('/login', (req, res) => {
     const { username, password } = req.body;
+
     if (username === 'admin' && password === 'adminpass') {
         req.session.user = { role: 'admin' };
-        res.redirect('/monitoring.html');
+        return res.redirect('/accueil.html');
     } else if (username === 'operateur' && password === 'operateurpass') {
         req.session.user = { role: 'operateur' };
-        res.redirect('/monitoring.html');
+        return res.redirect('/accueil.html');
     } else {
         res.send('Identifiants incorrects');
     }
@@ -56,8 +63,8 @@ function authMiddleware(role) {
 }
 
 // Routes protégées
-app.get('/monitoring.html', authMiddleware(), (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'monitoring.html'));
+app.get('/accueil.html', authMiddleware(), (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'accueil.html'));
 });
 
 app.get('/bdd.html', authMiddleware('admin'), (req, res) => {
@@ -82,6 +89,18 @@ app.get('/api/meteodata', (req, res) => {
     });
 });
 
+app.get('/historique', (req, res) => {
+    db.all('SELECT * FROM historique ORDER BY date DESC', [], (err, rows) => {
+        if (err) {
+            console.error(err);
+            res.status(500).send("Erreur lors de la récupération des données");
+        } else {
+            console.log("Données envoyées :", rows); // Vérifier si les données sont bien envoyées
+            res.json(rows);
+        }
+    });
+});
+
 // WebSockets pour mise à jour en temps réel
 io.on('connection', (socket) => {
     console.log('Client connecté');
@@ -95,5 +114,23 @@ io.on('connection', (socket) => {
 });
 
 server.listen(3000, '0.0.0.0', () => {
-    console.log('Serveur démarré sur http://10.160.120.88:3000');
+    console.log('Serveur démarré sur http://10.160.120.89:3000');
 });
+
+const { spawn } = require('child_process');
+
+function runPythonScript() {
+    const pythonProcess = spawn('python3', ['/var/www/html/meteo.py']);
+
+    pythonProcess.stdout.on('data', (data) => {
+        console.log(`Python Output: ${data}`);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        console.error(`Python Error: ${data}`);
+    });
+
+    pythonProcess.on('close', (code) => {
+        console.log(`Python script exited with code ${code}`);
+    });
+}

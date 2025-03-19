@@ -1,22 +1,8 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
-const http = require('http');
-const socketIo = require('socket.io');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
-
-// Connexion à la base de données SQLite
-const db = new sqlite3.Database('./bdd_meteo.db', sqlite3.OPEN_READONLY, (err) => {
-    if (err) {
-        console.error('Erreur de connexion à la base de données:', err.message);
-    } else {
-        console.log('Connecté à la base de données SQLite.');
-    }
-});
 
 app.use(session({
     secret: 'secret-key',
@@ -26,7 +12,7 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Page de login
+// Page de login (page d'accueil)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -71,29 +57,6 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// Route API pour récupérer les dernières données météo
-app.get('/api/meteodata', (req, res) => {
-    db.get("SELECT * FROM meteo ORDER BY timestamp DESC LIMIT 1", (err, row) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json(row);
-    });
-});
-
-// WebSockets pour mise à jour en temps réel
-io.on('connection', (socket) => {
-    console.log('Client connecté');
-    setInterval(() => {
-        db.get("SELECT * FROM meteo ORDER BY timestamp DESC LIMIT 1", (err, row) => {
-            if (!err && row) {
-                socket.emit('updateData', row);
-            }
-        });
-    }, 5000);
-});
-
-server.listen(3000, '0.0.0.0', () => {
-    console.log('Serveur démarré sur http://10.160.120.89:3000');
+app.listen(3000, '0.0.0.0', () => {
+    console.log('Serveur demarre sur http://10.160.120.89:3000');
 });
