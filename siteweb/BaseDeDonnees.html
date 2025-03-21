@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervision Éolienne</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .synoptique {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+        <!-- En-tête -->
+        <header class="bg-primary text-white text-center p-3"> 
+            <h1>Base de Données</h1>
+            <a href="login.html" class="btn btn-primary btn-lg">Se Déconnecter</a>
+        </header>
+        <!-- Affichage des données stockées -->
+        <h2 class="mt-4 text-center p-3">Historique des relevés</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Température (°C)</th>
+                    <th>Vitesse du vent (km/h)</th>
+                    <th>Direction</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+            </tbody>
+        </table>
+        
+            <div class="text-center">
+                <button id="exportCSV"  class="btn btn-primary btn-lg">Exporter le fichier en CSV</button>
+            </div>
+        
+        <script>
+            // Récupération des données stockées
+            const dataTable = document.getElementById('dataTable');
+            const data = JSON.parse(localStorage.getItem('data'));
+            if (data) {
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.date}</td>
+                        <td>${row.temperature}</td>
+                        <td>${row.vent}</td>
+                        <td>${row.direction}</td>
+                    `;
+                    dataTable.appendChild(tr);
+                });
+            }
+            // Exporter les données en CSV
+            const exportCSV = document.getElementById('exportCSV');
+            exportCSV.addEventListener('click', () => {
+                const csv = [
+                    ['Date', 'Température (°C)', 'Vitesse du vent (km/h)', 'Direction']
+                ];
+                data.forEach(row => {
+                    csv.push([row.date, row.temperature, row.vent, row.direction]);
+                });
+                const csvContent = csv.map(e => e.join(';')).join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'data.csv';
+                a.click();
+            });
+        </script>
+</body>
+</html>

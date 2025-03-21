@@ -71,7 +71,7 @@
 <body>
     <!-- En-tête -->
     <header class="bg-primary text-white text-center p-3 w-100"> 
-        <h1>Base de Données</h1>
+        <h1>Page de Login</h1>
     </header>  
 </body>
 
@@ -81,14 +81,28 @@
     <main>
         <div class="login-container mt-4">
             <h1>Connectez-vous</h1>
-            <form action="#">
-                <input type="text" class="form-control" placeholder="Identifiant" required>
-                <input type="passw  ord" class="form-control" placeholder="Mot de passe" required>
-                <button type="submit" class="btn-login">Connexion</button>
-            </form>
-        </div>
-    </main>
-    
+            <form onsubmit="return loginUser(event)">
+    <input type="text" id="username" class="form-control" placeholder="Identifiant" required>
+    <input type="password" id="password" class="form-control" placeholder="Mot de passe" required>
+    <button type="submit" class="btn-login">Connexion</button>
+</form>
+
+<script>
+function loginUser(event) {
+    event.preventDefault(); // Empêche le rechargement de la page
+
+    // Récupérer les valeurs des champs
+    let username = document.getElementById("username").value;
+    let password = document.getElementById("password").value;
+
+    // Simuler un login (remplace ceci par un appel serveur si besoin)
+    if (username === "admin" && password === "admin123") {
+        window.location.href = "accueil.html"; // Redirige vers la page d'accueil
+    } else {
+        alert("Identifiant ou mot de passe incorrect !");
+    }
+}
+</script>
 
 </body>
 </html>
