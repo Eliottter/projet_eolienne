@@ -127,3 +127,32 @@ function runPythonScript() {
         console.log(`Python script exited with code ${code}`);
     });
 }
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+
+    db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
+        if (err) {
+            res.status(500).send("Erreur serveur");
+            return;
+        }
+        if (!user || user.password !== password) {
+            res.status(401).send("Identifiants incorrects");
+            return;
+        }
+
+        // Stocker l'utilisateur dans la session
+        req.session.user = { username: user.username, role: user.role };
+        
+        // Rediriger selon le rôle
+        if (user.role === "operateur") {
+            res.json({ redirect: "/accueil.html" });
+        } else if (user.role === "admin") {
+            res.json({ redirect: "/bdd.html" });
+        } else {
+            res.status(403).send("Accès interdit");
+        }
+    });
+});

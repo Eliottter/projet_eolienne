@@ -89,14 +89,47 @@
 
 <script>
 function loginUser(event) {
-    event.preventDefault(); // Empêche le rechargement de la page
+    event.preventDefault();
 
-    // Récupérer les valeurs des champs
     let username = document.getElementById("username").value;
     let password = document.getElementById("password").value;
 
-    
+    fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        } else {
+            alert("Identifiants incorrects");
+        }
+    })
+    .catch(error => console.error("Erreur:", error));
 }
+
+function authMiddleware(role) {
+    return (req, res, next) => {
+        if (!req.session.user) {
+            return res.status(401).send("Non autorisé");
+        }
+        if (role && req.session.user.role !== role) {
+            return res.status(403).send("Accès interdit");
+        }
+        next();
+    };
+}
+
+app.get('/monitoring.html', authMiddleware("operateur"), (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'monitoring.html'));
+});
+
+app.get('/bdd.html', authMiddleware("admin"), (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'bdd.html'));
+});
+
 </script>
 
 </body>
