@@ -171,3 +171,16 @@ finally:
 
 # if __name__ == "__main__":
 #     pass
+
+
+def convert_orientation_to_degrees(value):
+    """
+    Convertit une valeur brute 0-10000 en degrés 0-360 et associe une direction.
+    """
+    degrees = (value / 27.78) % 360  # 1° ≈ 27.78
+    if 337.5 <= degrees or degrees < 22.5:
+        direction = "Nord (N)"
+    elif 22.5 <= degrees < 67.5:
+        direction = "Nord-Est (NE)"
+    ...
+    return round(degrees, 2), direction
