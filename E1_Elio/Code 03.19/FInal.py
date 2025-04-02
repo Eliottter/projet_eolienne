@@ -24,11 +24,12 @@ REGISTERS_TO_WRITE = {
 client = ModbusClient(host=AUTOMATE_IP, port=AUTOMATE_PORT)
 
 def read_register_safe(client, address):
-    for attempt in range(MAX_RETRIES):
-        result = client.read_holding_registers(address)
-        if not result.isError():
+    for attempt in range(MAX_RETRIES): # Essayer plusieurs fois de lire le registre
+        # Lecture du registre
+        result = client.read_holding_registers(address) 
+        if not result.isError(): # Vérification de l'erreur
             return result.registers[0]
-        print(f"Erreur de lecture au registre {address}. Tentative {attempt+1}/{MAX_RETRIES}")
+        print(f"Erreur de lecture au registre {address}. Tentative {attempt+1}/{MAX_RETRIES}") # Affichage de l'erreur
         time.sleep(1)
     return None
 
@@ -97,7 +98,7 @@ def convert_vitesse_vent_to_ms(value):
     """
     if value is None:
         return None
-    return value / 20 if value / 20 <= 10000/20 else 0
+    return value / 20 if value / 20 <= 10000/20 else 0 # On divise par 20 pour obtenir la vitesse en m/s
 
 def get_last_meteo_data():
     """
@@ -107,12 +108,12 @@ def get_last_meteo_data():
     """
     try:
         conn = sqlite3.connect('/home/ciel/Bureau/Elio_projet/BDD_meteo_simu.db') # ATTENTION Chemin à modifier en fonction de l'emplacement de la base de données 
-        c = conn.cursor()
+        c = conn.cursor() # Création d'un curseur pour exécuter des requêtes
         c.execute("SELECT Temperature, VitesseVent, DirectionVent FROM meteo ORDER BY DateHeure DESC LIMIT 1") # selection temperature, vitesse vent, direction vent
-        row = c.fetchone()
-        conn.close()
+        row = c.fetchone() # Récupération de la dernière ligne
+        conn.close() # Fermeture de la connexion à la base de données
         if row:
-            return row[0]*10, row[1]*10, row[2]
+            return row[0]*10, row[1]*10, row[2] # Miltuplier par 10 pour correspondre à la valeur entiere
     except Exception as e:
         print(f"Erreur lors de la récupération des données météo : {e}")
     return None, None, None
