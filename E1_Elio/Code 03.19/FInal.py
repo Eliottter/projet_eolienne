@@ -1,7 +1,7 @@
 from pymodbus.client import ModbusTcpClient as ModbusClient
 import sqlite3
 import time
-
+#test
 # Configuration de l'automate
 AUTOMATE_IP = "172.90.93.61"  # Nouvelle adresse IP
 AUTOMATE_PORT = 502
