@@ -20,14 +20,17 @@
                 <th>Date</th>
                 <th>Température (°C)</th>
                 <th>Vitesse du vent (km/h)</th>
-                <th>Direction</th>
+                <th>Direction (°)</th>
+                <th>Direction (texte)</th>
             </tr>
         </thead>
         <tbody id="dataTable"></tbody>
     </table>
 
     <div class="text-center">
-        <button id="exportCSV" class="btn btn-primary btn-lg">Exporter le fichier en CSV</button>
+        <footer class="text-center mt-5">
+            <button id="exportCSV" class="btn btn-primary btn-lg">Exporter le fichier en CSV</button>
+        </footer>
     </div>
 
     <script>
@@ -35,19 +38,24 @@
         fetch('/api/donnees')
             .then(response => response.json())  // Convertir la réponse en JSON
             .then(data => {
-                const dataTable = document.getElementById('dataTable');
+            console.log('Données récupérées :', data);  // Affiche ce que contient 'data'
+            if (Array.isArray(data)) {  // Vérifie que 'data' est bien un tableau
                 data.forEach(row => {
-                    // Créer une nouvelle ligne du tableau pour chaque donnée
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${row.date}</td>
-                        <td>${row.temperature}</td>
-                        <td>${row.vent}</td>
-                        <td>${row.direction}</td>
+                        <td>${row.DateHeure}</td>
+                        <td>${row.VitesseVent}</td>
+                        <td>${row.Temperature}</td>
+                        <td>${row.DirectionVent}</td>
+                        <td>${row.DirectionVent1}</td>
                     `;
                     dataTable.appendChild(tr);
                 });
-            })
+            } else {
+                console.error('Les données ne sont pas un tableau :', data);
+            }
+        })
+
             .catch(error => console.error('Erreur lors de la récupération des données:', error));
     </script>
 
