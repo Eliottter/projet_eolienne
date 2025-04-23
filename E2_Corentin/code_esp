@@ -1,0 +1,63 @@
+#include <Wire.h>
+#include <MPU9250_asukiaaa.h>
+
+MPU9250_asukiaaa mySensor;
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin(); // D1 (SCL), D2 (SDA)
+
+  mySensor.setWire(&Wire);
+  mySensor.beginAccel();
+  mySensor.beginGyro();
+  mySensor.beginMag();
+
+  Serial.println("MPU9250 initialisation terminée !");
+}
+
+int16_t readRawTemp() {
+  const uint8_t MPU9250_ADDRESS = 0x68;
+  Wire.beginTransmission(MPU9250_ADDRESS);
+  Wire.write(0x41); // Registre TEMP_OUT_H
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU9250_ADDRESS, (uint8_t)2);
+
+  int16_t tempRaw = (Wire.read() << 8) | Wire.read();
+  return tempRaw;
+}
+
+void loop() {
+  mySensor.accelUpdate();
+  mySensor.gyroUpdate();
+
+  float ax = mySensor.accelX();
+  float ay = mySensor.accelY();
+  float az = mySensor.accelZ();
+
+  int16_t tempRaw = readRawTemp();
+  float temperature = (tempRaw / 333.87) + 21.0;
+
+  float roll  = atan2(ay, az) * 180.0 / PI;
+  float pitch = atan2(-ax, sqrt(ay * ay + az * az)) * 180.0 / PI;
+
+  Serial.println("---");
+  Serial.print("Température : "); Serial.print(temperature); Serial.println(" °C");
+
+  // Affichage accélérations sur une seule ligne
+  Serial.print("Accélération [X: ");
+  Serial.print(ax);
+  Serial.print(" g, Y: ");
+  Serial.print(ay);
+  Serial.print(" g, Z: ");
+  Serial.print(az);
+  Serial.println(" g]");
+
+  // Affichage inclinaisons sur une seule ligne
+  Serial.print("Inclinaison [X : ");
+  Serial.print(roll);
+  Serial.print(" °, Y : ");
+  Serial.print(pitch);
+  Serial.println(" °]");
+
+  delay(500);
+}
