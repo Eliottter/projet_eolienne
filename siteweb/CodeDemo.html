@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervision Météorologique - Démo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .graphique {
+            width: 100%;
+            height: 400px;
+        }
+        .synoptique {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        .compass-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .compass-image {
+            width: 300px;
+            height: 300px;
+            transition: transform 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+<header class="bg-primary text-white text-center p-3">
+    <h1>Supervision Météorologique</h1>
+</header>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4 synoptique">
+            <h2>Synoptique</h2>
+            <ul>
+                <li>Vitesse du vent : <span id="vent">0</span> km/h</li>
+                <li>Température : <span id="temperature">0</span> °C</li>
+                <li>Direction du vent (texte) : <span id="direction">N</span></li>
+                <li>Direction du vent (degrés) : <span id="directionDegrees">0</span>°</li>
+            </ul>
+
+            <div class="compass-container">
+                <h2>Boussole</h2>
+                <img src="assets/compass-dark.png" alt="Boussole" class="compass-image" id="compassImage">
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <h2>Données en temps réel</h2>
+            <canvas id="graphique"> </canvas>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('graphique').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Vitesse du vent (km/h)',
+                data: [],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1
+            }]
+        }
+    });
+
+    function getRandomValue(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function updateUI() {
+        const vitesseVent = getRandomValue(0, 25);
+        const temperature = getRandomValue(-5, 40);
+        const directionDegrees = getRandomValue(0, 360);
+        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+        const directionText = directions[Math.floor(directionDegrees / 45) % 8];
+
+        document.getElementById('vent').innerText = vitesseVent;
+        document.getElementById('temperature').innerText = temperature;
+        document.getElementById('directionDegrees').innerText = directionDegrees;
+        document.getElementById('direction').innerText = directionText;
+
+        document.getElementById('compassImage').style.transform = `rotate(${directionDegrees}deg)`;
+
+        const currentTime = new Date().toLocaleTimeString();
+        chart.data.labels.push(currentTime);
+        chart.data.datasets[0].data.push(vitesseVent);
+
+        if (chart.data.labels.length > 10) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+        }
+
+        chart.update();
+    }
+
+    setInterval(updateUI, 2000);
+    window.onload = updateUI;
+</script>
+
+</body>
+</html>

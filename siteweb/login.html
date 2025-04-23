@@ -21,14 +21,13 @@
             text-align: center;
         }
 
-
         main {
             flex: 1; /* Permet au contenu de prendre l'espace restant sous l'en-tête */
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
+
         .login-container {
             background-color: #ffffff;
             padding: 2rem;
@@ -37,22 +36,26 @@
             text-align: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         .login-container h1 {
             font-size: 1.5rem;
             margin-bottom: 1rem;
             color: #007bff;
         }
+
         .form-control {
             background-color: #e9ecef;
             color: black;
             border: none;
             margin-bottom: 1rem;   /* Ajoute un espace entre les éléments */
         }
+
         .form-control:focus {
             background-color: #ffffff;
             box-shadow: none;
             border: 1px solid #007bff;
         }
+
         .btn-login {
             background-color: #007bff;
             color: white;
@@ -63,6 +66,7 @@
             font-size: 1rem;
             transition: 0.3s;
         }
+
         .btn-login:hover {
             background-color: #0056b3;
         }
@@ -73,64 +77,44 @@
     <header class="bg-primary text-white text-center p-3 w-100"> 
         <h1>Page de Login</h1>
     </header>  
-</body>
 
-
-    <body>
     <!-- Bloc de Connexion -->
     <main>
         <div class="login-container mt-4">
             <h1>Connectez-vous</h1>
             <form onsubmit="return loginUser(event)">
-    <input type="text" id="username" class="form-control" placeholder="Identifiant" required>
-    <input type="password" id="password" class="form-control" placeholder="Mot de passe" required>
-    <button type="submit" class="btn-login">Connexion</button>
-</form>
+                <input type="text" id="username" class="form-control" placeholder="Identifiant" required>
+                <input type="password" id="password" class="form-control" placeholder="Mot de passe" required>
+                <button type="submit" class="btn-login">Connexion</button>
+            </form>
+        </div>
+    </main>
 
-<script>
-function loginUser(event) {
-    event.preventDefault();
+    <script>
+    function loginUser(event) {
+        event.preventDefault();
 
-    let username = document.getElementById("username").value;
-    let password = document.getElementById("password").value;
+        let username = document.getElementById("username").value;
+        let password = document.getElementById("password").value;
 
-    fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.redirect) {
-            window.location.href = data.redirect;
-        } else {
-            alert("Identifiants incorrects");
-        }
-    })
-    .catch(error => console.error("Erreur:", error));
-}
-
-function authMiddleware(role) {
-    return (req, res, next) => {
-        if (!req.session.user) {
-            return res.status(401).send("Non autorisé");
-        }
-        if (role && req.session.user.role !== role) {
-            return res.status(403).send("Accès interdit");
-        }
-        next();
-    };
-}
-
-app.get('/monitoring.html', authMiddleware("operateur"), (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'monitoring.html'));
-});
-
-app.get('/bdd.html', authMiddleware("admin"), (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'bdd.html'));
-});
-
-</script>
+        fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        })
+        .then(response => response.text()) 
+        .then(data => {
+            if (data.includes("accueil.html")) {
+                window.location.href = "/accueil.html";
+            } else if (data.includes("BaseDeDonnees.html")) {
+                window.location.href = "/BaseDeDonnees.html";
+            } else {
+                alert("Identifiants incorrects");
+            }
+        })
+        .catch(error => console.error("Erreur:", error));
+    }
+    </script>
 
 </body>
 </html>

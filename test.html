@@ -10,10 +10,11 @@
     <header class="bg-primary text-white text-center p-3">
         <h1>Base de Données</h1>
         <button id="logoutButton" class="btn btn-primary btn-lg">Se Déconnecter</button>
+            <script src="logout.js"></script>
     </header>
 
     <h2 class="mt-4 text-center">Historique des relevés</h2>
-
+    
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -23,15 +24,13 @@
                 <th>Direction</th>
             </tr>
         </thead>
-        <tbody id="dataTable"></tbody>
+        <tbody id="dataTable">
+            <!-- Les données seront injectées ici -->
+        </tbody>
     </table>
 
-    <div class="text-center">
-        <button id="exportCSV" class="btn btn-primary btn-lg">Exporter le fichier en CSV</button>
-    </div>
-
     <script>
-        // Faire la requête pour récupérer les données depuis l'API
+        // Faire la requête pour récupérer les données
         fetch('/api/donnees')
             .then(response => response.json())  // Convertir la réponse en JSON
             .then(data => {

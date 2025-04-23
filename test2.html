@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            background: url('FondEcranLogin.png') no-repeat center center fixed;
+            background: url('/assets/FondEcranLogin.png') no-repeat center center fixed;
             background-size: cover;
             display: flex;
             flex-direction: column;
@@ -71,7 +71,7 @@
 <body>
     <!-- En-tête -->
     <header class="bg-primary text-white text-center p-3 w-100"> 
-        <h1>Base de Données</h1>
+        <h1>Page de Login</h1>
     </header>  
 </body>
 
@@ -81,14 +81,56 @@
     <main>
         <div class="login-container mt-4">
             <h1>Connectez-vous</h1>
-            <form action="#">
-                <input type="text" class="form-control" placeholder="Identifiant" required>
-                <input type="passw  ord" class="form-control" placeholder="Mot de passe" required>
-                <button type="submit" class="btn-login">Connexion</button>
-            </form>
-        </div>
-    </main>
-    
+            <form onsubmit="return loginUser(event)">
+    <input type="text" id="username" class="form-control" placeholder="Identifiant" required>
+    <input type="password" id="password" class="form-control" placeholder="Mot de passe" required>
+    <button type="submit" class="btn-login">Connexion</button>
+</form>
+
+<script>
+function loginUser(event) {
+    event.preventDefault();
+
+    let username = document.getElementById("username").value;
+    let password = document.getElementById("password").value;
+
+    fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        } else {
+            alert("Identifiants incorrects");
+        }
+    })
+    .catch(error => console.error("Erreur:", error));
+}
+
+function authMiddleware(role) {
+    return (req, res, next) => {
+        if (!req.session.user) {
+            return res.status(401).send("Non autorisé");
+        }
+        if (role && req.session.user.role !== role) {
+            return res.status(403).send("Accès interdit");
+        }
+        next();
+    };
+}
+// Rediriger l'utilisateur vers la page d'accueil après la connexion
+app.get('/accueil.html', authMiddleware("operateur"), (req, res) => { 
+    res.sendFile(path.join(__dirname, 'public', 'accueil.html')); 
+});
+// Rediriger l'utilisateur vers la page de la base de données après la connexion
+app.get('/BaseDeDonnees.html', authMiddleware("admin"), (req, res) => { 
+    res.sendFile(path.join(__dirname, 'public', 'BaseDeDonnees.html'));
+});
+
+</script>
 
 </body>
 </html>
