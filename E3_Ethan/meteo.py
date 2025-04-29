@@ -11,7 +11,7 @@ MQTT_USER = "user"  # Ton utilisateur MQTT
 MQTT_PASSWORD = "Azerty.1"  # Ton mot de passe MQTT
 WEATHER_API_URL = "http://api.weatherapi.com/v1/current.json"
 API_KEY = "9b4f6d96f5cd4a709db145328252201"  # API Key de WeatherAPI
-DATABASE_PATH = "/var/www/html/BDD_meteo.db"  # Chemin de ta base de données
+DATABASE_PATH = "./BDD_meteo.db"  # Chemin de ta base de données
 
 # MQTT Callbacks
 def on_connect(client, userdata, flags, rc, *extra_args):
@@ -24,7 +24,7 @@ def on_message(client, userdata, msg):
 # Fonction pour récupérer les données météo
 def get_donnee_meteo():
     try:
-        response = requests.get(WEATHER_API_URL, params={"key": API_KEY, "q": "Portland"})
+        response = requests.get(WEATHER_API_URL, params={"key": API_KEY, "q": "Brest, France"})
         if response.status_code == 200:
             return response.json()
         else:
@@ -40,7 +40,7 @@ def setup_database():
     c = conn.cursor()
     # Création de la table si elle n'existe pas
     c.execute('''CREATE TABLE IF NOT EXISTS meteo
-                 (DateHeure TIMESTAMP, VitesseVent REAL, Temperature REAL, DirectionVent FLOAT, DirectionVent1 FLOAT)''')
+                 (DateHeure TIMESTAMP, VitesseVent REAL, Temperature REAL, DirectionVentDegres FLOAT, DirectionVentCardinal TEXT)''')
     conn.commit()
     conn.close()
 
@@ -52,7 +52,7 @@ def insert_into_db(data):
 
         # Insertion dans la base de données
         cursor.execute("""
-            INSERT INTO meteo (DateHeure, VitesseVent, Temperature, DirectionVent, DirectionVent1)
+            INSERT INTO meteo (DateHeure, VitesseVent, Temperature, DirectionVentDegres, DirectionVentCardinal)
             VALUES (datetime('now'), ?, ?, ?, ?)
         """, (data["wind_kph"], data["temp_c"], data["wind_degree"], data["wind_dir"]))
 
@@ -67,8 +67,8 @@ def insert_into_db(data):
 # Fonction pour publier sur MQTT
 def publish_to_mqtt(client, data):
     try:
-        message = f"Wind Speed: {data['wind_kph']} kph, Temperature: {data['temp_c']} °C, Wind Direction: {data['wind_dir']}"
-        client.publish(TOPIC, message)
+        message = f"Vitesse du vent: {data['wind_kph']} km/h, Température: {data['temp_c']} °C, Direction du vent (degrés): {data['wind_degree']}°, Direction du vent (cardinal): {data['wind_dir']}"
+        client.publish(TOPIC, message) 
         print("Données publiées sur le topic MQTT:", message)
     except Exception as e:
         print(f"Erreur lors de la publication sur MQTT: {e}")
