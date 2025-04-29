@@ -23,7 +23,7 @@ def on_message(client, userdata, msg):
 def get_donnee_meteo():
     try:
         # Demande à l'API pour la ville de Portland
-        response = requests.get(WEATHER_API_URL, params={"key": API_KEY, "q": "Portland"})
+        response = requests.get(WEATHER_API_URL, params={"key": API_KEY, "q": "Brest"})
         if response.status_code == 200:
             return response.json()
         else:
