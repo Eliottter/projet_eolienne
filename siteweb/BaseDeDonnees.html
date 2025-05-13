@@ -34,28 +34,56 @@
     </div>
 
     <script>
+        // Fonction pour télécharger les données au format CSV
+        function downloadCSV(csvContent, fileName = 'export.csv') {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) { // Vérifie la compatibilité du navigateur
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', fileName);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
         // Faire la requête pour récupérer les données depuis l'API
         fetch('/api/donnees')
             .then(response => response.json())  // Convertir la réponse en JSON
             .then(data => {
-            console.log('Données récupérées :', data);  // Affiche ce que contient 'data'
-            if (Array.isArray(data)) {  // Vérifie que 'data' est bien un tableau
-                data.forEach(row => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${row.DateHeure}</td>
-                        <td>${row.VitesseVent}</td>
-                        <td>${row.Temperature}</td>
-                        <td>${row.DirectionVent}</td>
-                        <td>${row.DirectionVent1}</td>
-                    `;
-                    dataTable.appendChild(tr);
-                });
-            } else {
-                console.error('Les données ne sont pas un tableau :', data);
-            }
-        })
+                console.log('Données récupérées :', data);  // Affiche ce que contient 'data'
+                if (Array.isArray(data)) {  // Vérifie que 'data' est bien un tableau
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${row.DateHeure}</td>
+                            <td>${row.VitesseVent}</td>
+                            <td>${row.Temperature}</td>
+                            <td>${row.DirectionVentDegres}</td>
+                            <td>${row.DirectionVentCardinal}</td>
+                        `;
+                        dataTable.appendChild(tr);
+                    });
 
+                    // Ajouter un événement pour le bouton d'exportation
+                    document.getElementById('exportCSV').addEventListener('click', () => {
+                        // Créer l'entête du CSV
+                        let csvContent = 'Date,Température (°C),Vitesse du vent (km/h),Direction (°),Direction (texte)\n';
+
+                        // Ajouter chaque ligne de données
+                        data.forEach(row => {
+                            csvContent += `${row.DateHeure},${row.Temperature},${row.VitesseVent},${row.DirectionVentDegres},${row.DirectionVentCardinal}\n`;
+                        });
+
+                        // Télécharger le fichier CSV
+                        downloadCSV(csvContent);
+                    });
+                } else {
+                    console.error('Les données ne sont pas un tableau :', data);
+                }
+            })
             .catch(error => console.error('Erreur lors de la récupération des données:', error));
     </script>
 
