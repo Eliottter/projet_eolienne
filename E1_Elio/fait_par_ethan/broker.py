@@ -3,7 +3,7 @@ import sqlite3
 import time
 
 # Configuration
-BROKER_ADDRESS = "10.160.120.89"  # Adresse du serveur MQTT
+BROKER_ADDRESS = "10.160.120.87"  # Adresse du serveur MQTT
 TOPIC = "capteur_present"  # Nouveau topic
 MQTT_PORT = 1883  # Port MQTT par défaut
 MQTT_USER = "user"  # Ton utilisateur MQTT
