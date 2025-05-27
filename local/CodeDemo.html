@@ -78,14 +78,32 @@
         const temperature = getRandomValue(-5, 40);
         const directionDegrees = getRandomValue(0, 360);
         const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
-        const directionText = directions[Math.floor(directionDegrees / 45) % 8];
+        //Convertir les degrés en texte
+        let directionText = '';
+        if (directionDegrees >= 337.5 || directionDegrees < 22.5) {
+            directionText = 'N';
+        } else if (directionDegrees >= 22.5 && directionDegrees < 67.5) {
+            directionText = 'NE';
+        } else if (directionDegrees >= 67.5 && directionDegrees < 112.5) {
+            directionText = 'E';
+        } else if (directionDegrees >= 112.5 && directionDegrees < 157.5) {
+            directionText = 'SE';
+        } else if (directionDegrees >= 157.5 && directionDegrees < 202.5) {
+            directionText = 'S';
+        } else if (directionDegrees >= 202.5 && directionDegrees < 247.5) {
+            directionText = 'SO';
+        } else if (directionDegrees >= 247.5 && directionDegrees < 292.5) {
+            directionText = 'O';
+        } else if (directionDegrees >= 292.5 && directionDegrees < 337.5) {
+            directionText = 'NO';
+        }
 
         document.getElementById('vent').innerText = vitesseVent;
         document.getElementById('temperature').innerText = temperature;
         document.getElementById('directionDegrees').innerText = directionDegrees;
         document.getElementById('direction').innerText = directionText;
 
-        document.getElementById('compassImage').style.transform = `rotate(${directionDegrees}deg)`;
+        document.getElementById('compassImage').style.transform = `rotate(${-directionDegrees}deg)`;
 
         const currentTime = new Date().toLocaleTimeString();
         chart.data.labels.push(currentTime);
@@ -102,6 +120,9 @@
     setInterval(updateUI, 2000);
     window.onload = updateUI;
 </script>
+<div class="text-center mt-4">
+        <a href="BaseDeDonnees.html" class="btn btn-primary btn-lg">Accéder à la Base de Données</a>
+    </div>
 
 </body>
 </html>

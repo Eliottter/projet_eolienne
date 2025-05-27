@@ -3,16 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base de Données</title>
+    <title>Base de Données </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+    header {
+        background-color: #007bff;
+        color: white;
+        padding: 1rem;
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .logo-img {
+    height: 40px;
+    margin-right: 15px;
+    transition: transform 0.2s;
+}
+
+.logo-img:hover {
+    transform: scale(1.1);
+}
+
+    .title {
+        text-align: center;
+        flex: 1;
+        font-size: 1.8rem;
+        margin: 0;
+    }
+
+    .user-module {
+        background-color: #0056b3;
+        padding: 5px 15px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .user-module span {
+        font-weight: bold;
+    }
+
+    .user-module .btn {
+        font-size: 0.8rem;
+        margin-left: 10px;
+        color: white;
+        background-color: #dc3545;
+    }
+
+    .user-module .btn:hover {
+        background-color: #c82333;
+    }
+</style>
 </head>
-<body>
-    <header class="bg-primary text-white text-center p-3">
-        <h1>Base de Données</h1>
-        <button id="logoutButton" class="btn btn-primary btn-lg">Se Déconnecter</button>
+<body>        
+    <header>
+        <div class="header-content">
+    <a href="/accueil">
+        <img src="/assets/home.png" alt="Accueil" class="logo-img">
+    </a>
+            <h1 class="title">Base de Données</h1>
+            <div class="user-module">
+                <span id="usernameDisplay"></span>
+                <button class="btn btn-danger" onclick="clearCache()">Déconnexion</button>
+            </div>
+        </div>
     </header>
 
-    <h2 class="mt-4 text-center">Historique des relevés</h2>
+    
+<script>
+        // Fonction pour récupérer le nom d'utilisateur et l'afficher
+        function afficherNomUtilisateur() {
+            fetch('/api/user')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('usernameDisplay').textContent = data.username;
+                })
+                .catch(error => {
+                console.error('Erreur lors de la récupération du nom d\'utilisateur:', error);
+                // window.location.href = '/'; // Redirige vers la page de login
+                });
+        }
+        // Charger le nom de l'utilisateur au chargement de la page
+        afficherNomUtilisateur();
+    </script>
+    <h2 class="mt-4 text-center">Historique des relevés</h2> 
+    <div class="text-center">
+        <footer class="text-center mt-5">
+            <button id="exportCSV" class="btn btn-primary btn-lg">Exporter le fichier en CSV</button>
+        </footer>
+    </div>
 
     <table class="table table-bordered">
         <thead>
@@ -27,12 +113,24 @@
         <tbody id="dataTable"></tbody>
     </table>
 
-    <div class="text-center">
-        <footer class="text-center mt-5">
-            <button id="exportCSV" class="btn btn-primary btn-lg">Exporter le fichier en CSV</button>
-        </footer>
-    </div>
 
+<!-- Suppression du cache -->
+        <script>
+function clearCache() {
+    if ('caches' in window) {
+        caches.keys().then(function(names) {
+            for (let name of names) caches.delete(name);
+        });
+    }
+
+    // Supprimer le cookie de session côté client
+    document.cookie = 'connect.sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+
+    // Rediriger et forcer un rechargement complet
+    window.location.replace('/');
+}
+
+</script>
     <script>
         // Fonction pour télécharger les données au format CSV
         function downloadCSV(csvContent, fileName = 'export.csv') {
@@ -50,7 +148,7 @@
         }
 
         // Faire la requête pour récupérer les données depuis l'API
-        fetch('/api/donnees')
+        fetch('/api/meteo')
             .then(response => response.json())  // Convertir la réponse en JSON
             .then(data => {
                 console.log('Données récupérées :', data);  // Affiche ce que contient 'data'
@@ -59,8 +157,8 @@
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
                             <td>${row.DateHeure}</td>
-                            <td>${row.VitesseVent}</td>
                             <td>${row.Temperature}</td>
+                            <td>${row.VitesseVent}</td>
                             <td>${row.DirectionVentDegres}</td>
                             <td>${row.DirectionVentCardinal}</td>
                         `;

@@ -92,28 +92,29 @@
 
     <script>
     function loginUser(event) {
-        event.preventDefault();
+    event.preventDefault();
 
-        let username = document.getElementById("username").value;
-        let password = document.getElementById("password").value;
+    let username = document.getElementById("username").value;
+    let password = document.getElementById("password").value;
 
-        fetch("/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
-        })
-        .then(response => response.text()) 
-        .then(data => {
-            if (data.includes("accueil.html")) {
-                window.location.href = "/accueil.html";
-            } else if (data.includes("BaseDeDonnees.html")) {
-                window.location.href = "/BaseDeDonnees.html";
-            } else {
-                alert("Identifiants incorrects");
-            }
-        })
-        .catch(error => console.error("Erreur:", error));
-    }
+    fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    })
+    .then(response => response.text()) 
+    .then(data => {
+        if (data === 'accueil.html') {
+            window.location.href = "/accueil";
+        } else if (data === 'BaseDeDonnees.html') {
+            window.location.href = "/basededonnees";
+        } else {
+            alert("Identifiants incorrects");
+        }
+    })
+    .catch(error => console.error("Erreur:", error));
+}
+
     </script>
 
 </body>
