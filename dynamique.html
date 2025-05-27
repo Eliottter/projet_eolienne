@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervision Éolienne</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .synoptique {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-primary text-white text-center p-3">
+        <h1>Supervision Éolienne</h1>
+    </header>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Colonne gauche : Synoptique -->
+            <div class="col-md-4 synoptique">
+                <h2>Synoptique</h2>
+                <p>Affichage des états en temps réel.</p>
+                <ul>
+                    <li>Angle de la nacelle : <span id="angle">...</span></li>
+                    <li>Vitesse du vent : <span id="vent">...</span></li>
+                    <li>Température : <span id="temperature">...</span></li>
+                </ul>
+            </div>
+
+            <!-- Colonne droite : Graphiques -->
+            <div class="col-md-8">
+                <h2>Données en temps réel</h2>
+                <canvas id="graphique"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center p-2 mt-4">
+        <p>&copy; 2025 - Supervision Éolienne</p>
+    </footer>
+
+    <script>
+        const ctx = document.getElementById('graphique').getContext('2d');
+        let chartData = {
+            labels: [],
+            datasets: [{
+                label: 'Vitesse du vent (km/h)',
+                data: [],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1
+            }]
+        };
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+        });
+
+        async function fetchWeather() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/weather');
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error("Erreur:", data.error);
+                    return;
+                }
+
+                document.getElementById("vent").textContent = data.VitesseVent + " km/h";
+                document.getElementById("angle").textContent = data.DirectionVent + "°";
+                document.getElementById("temperature").textContent = data.Temperature + "°C";
+
+                const now = new Date().toLocaleTimeString();
+                chartData.labels.push(now);
+                chartData.datasets[0].data.push(data.VitesseVent);
+
+                if (chartData.labels.length > 10) {
+                    chartData.labels.shift();
+                    chartData.datasets[0].data.shift();
+                }
+
+                myChart.update();
+            } catch (error) {
+                console.error("Erreur lors de la récupération des données météo:", error);
+            }
+        }
+
+        setInterval(fetchWeather, 5000);
+        fetchWeather();
+    </script>
+</body>
+</html>
