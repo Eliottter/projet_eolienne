@@ -1,0 +1,117 @@
+#include <Wire.h>
+#include <MPU9250_asukiaaa.h>
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+
+MPU9250_asukiaaa mySensor;
+
+const char* ssid = "wificoco";
+const char* password = "qsftqhkn";
+const char* mqttServer = "192.168.203.104"; // par exemple "192.168.1.100"
+const int mqttPort = 1883;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+float rollOffset = 0;
+float pitchOffset = 0;
+
+void connectToWiFi() {
+  Serial.print("Connexion au Wi-Fi");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnecté au Wi-Fi !");
+}
+
+void connectToMQTT() {
+  while (!client.connected()) {
+    Serial.print("Connexion au broker MQTT...");
+    if (client.connect("ESP8266Client")) {
+      Serial.println("Connecté !");
+    } else {
+      Serial.print("Échec, code erreur = ");
+      Serial.print(client.state());
+      Serial.println(". Nouvelle tentative dans 2 secondes.");
+      delay(2000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();
+
+  WiFi.mode(WIFI_STA);
+  connectToWiFi();
+
+  client.setServer(mqttServer, mqttPort);
+  connectToMQTT();
+
+  mySensor.setWire(&Wire);
+  mySensor.beginAccel();
+  mySensor.beginGyro();
+  mySensor.beginMag();
+
+  Serial.println("MPU9250 initialisation terminée !");
+  delay(1000);
+  calibrateAngles();
+}
+
+int16_t readRawTemp() {
+  const uint8_t MPU9250_ADDRESS = 0x68;
+  Wire.beginTransmission(MPU9250_ADDRESS);
+  Wire.write(0x41); // TEMP_OUT_H
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU9250_ADDRESS, (uint8_t)2);
+  return (Wire.read() << 8) | Wire.read();
+}
+
+void calibrateAngles() {
+  mySensor.accelUpdate();
+  float ax = mySensor.accelX();
+  float ay = mySensor.accelY();
+  float az = mySensor.accelZ();
+
+  rollOffset = atan2(ay, az) * 180.0 / PI + 180;
+  pitchOffset = atan2(-ax, sqrt(ay * ay + az * az)) * 180.0 / PI;
+
+  Serial.println("Calibration effectuée !");
+}
+
+void loop() {
+  if (!client.connected()) {
+    connectToMQTT();
+  }
+  client.loop();
+
+  mySensor.accelUpdate();
+
+  float ax = mySensor.accelX();
+  float ay = mySensor.accelY();
+  float az = mySensor.accelZ();
+
+  int16_t tempRaw = readRawTemp();
+  float temperature = (tempRaw / 333.87) + 21.0;
+
+  float roll  = atan2(ay, az) * 180.0 / PI + 180 - rollOffset;
+  float pitch = atan2(-ax, sqrt(ay * ay + az * az)) * 180.0 / PI - pitchOffset;
+
+  Serial.println("---");
+  Serial.print("Température : "); Serial.print(temperature); Serial.println(" °C");
+  Serial.print("Inclinaison [X : "); Serial.print(roll);
+  Serial.print(" °, Y : "); Serial.print(pitch); Serial.println(" °]");
+
+  // Création du message JSON
+  String payload = "{";
+  payload += "\"temperature\": " + String(temperature, 2) + ",";
+  payload += "\"roll\": " + String(roll, 2) + ",";
+  payload += "\"pitch\": " + String(pitch, 2);
+  payload += "}";
+
+  client.publish("test_capteurs", payload.c_str());
+
+  delay(1000);
+}
