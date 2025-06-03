@@ -173,69 +173,50 @@ function clearCache() {
 
 </script>
 <script>
-const socket = new WebSocket('wss://' + window.location.hostname + ':3000');
+// Fonction pour charger les dernières données depuis l'API
+    function chargerDernieresDonnees() {
+        fetch('/api/meteo')
+            .then(response => response.json())
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    const derniere = data[0];  // Dernière ligne de la BDD
 
-socket.onmessage = function(event) {
-    const data = JSON.parse(event.data);
+                    // Mise à jour du synoptique
+                    document.getElementById('VitesseVent').innerText = derniere.VitesseVent ?? '0';
+                    document.getElementById('Temperature').innerText = derniere.Temperature ?? 'N/A';
+                    document.getElementById('DirectionVentDegres').innerText = derniere.DirectionVentDegres ?? '0';
+                    document.getElementById('DirectionVentCardinal').innerText = derniere.DirectionVentCardinal ?? 'N';
 
-    // Met à jour les valeurs dans le Synoptique
-    document.getElementById('VitesseVent').innerText = data.VitesseVent ?? '0';
-    document.getElementById('Temperature').innerText = data.Temperature ?? 'N/A';
-    document.getElementById('DirectionVentDegres').innerText = data.DirectionVentDegres ?? '0';
-    document.getElementById('DirectionVentCardinal').innerText = data.DirectionVentCardinal ?? 'N';
+                    // Mise à jour de la boussole
+                    const degres = parseFloat(derniere.DirectionVentDegres);
+                    if (!isNaN(degres)) {
+                        document.getElementById('compassImage').style.transform = `rotate(${-degres}deg)`;
+                        document.getElementById('directionText').innerText = derniere.DirectionVentCardinal ?? 'N';
+                    }
 
-    // Boussole
-    const degres = parseFloat(data.DirectionVentDegres);
-    if (!isNaN(degres)) {
-        document.getElementById('compassImage').style.transform = `rotate(${degres}deg)`;
-        document.getElementById('directionText').innerText = data.DirectionVentCardinal ?? 'N';
-    }
+                    // Mise à jour du graphique
+                    if (window.myChart) {
+                        const now = new Date().toLocaleTimeString();
+                        window.myChart.data.labels.push(now);
+                        window.myChart.data.datasets[0].data.push(derniere.VitesseVent);
 
-    // Graphique Chart.js
-    if (window.myChart) {
-        const lineChartCtx = document.getElementById('graphique').getContext('2d');
-window.myChart = new Chart(lineChartCtx, {
-    type: 'line',
-    data: {
-        labels: [],
-        datasets: [{
-            label: 'Vitesse du vent (km/h)',
-            data: [],
-            borderColor: 'rgba(75, 192, 192, 1)',
-            tension: 0.1
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            x: {
-                title: {
-                    display: true,
-                    text: 'Heure'
+                        if (window.myChart.data.labels.length > 10) {
+                            window.myChart.data.labels.shift();
+                            window.myChart.data.datasets[0].data.shift();
+                        }
+
+                        window.myChart.update();
+                    }
                 }
-            },
-            y: {
-                title: {
-                    display: true,
-                    text: 'Vitesse (km/h)'
-                },
-                beginAtZero: true
-            }
-        }
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement des données depuis la BDD :', error);
+            });
     }
-});
-        const now = new Date().toLocaleTimeString();
-        window.myChart.data.labels.push(now);
-        window.myChart.data.datasets[0].data.push(data.VitesseVent);
 
-        if (window.myChart.data.labels.length > 10) {
-            window.myChart.data.labels.shift();
-            window.myChart.data.datasets[0].data.shift();
-        }
-
-        window.myChart.update();
-    }
-};
+    // Appel initial et toutes les X secondes
+    chargerDernieresDonnees();
+    setInterval(chargerDernieresDonnees, 5000);  // Mise à jour toutes les 5 secondes
 </script>
 
     <div class="text-center mt-4">

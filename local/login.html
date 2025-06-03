@@ -83,6 +83,7 @@
         <div class="login-container mt-4">
             <h1>Connectez-vous</h1>
             <form onsubmit="return loginUser(event)">
+                <!-- Champs de saisie pour l'identifiant et le mot de passe -->
                 <input type="text" id="username" class="form-control" placeholder="Identifiant" required>
                 <input type="password" id="password" class="form-control" placeholder="Mot de passe" required>
                 <button type="submit" class="btn-login">Connexion</button>
@@ -97,18 +98,16 @@
     let username = document.getElementById("username").value;
     let password = document.getElementById("password").value;
 
-    fetch("/login", {
+    fetch("/login", {// Envoi des données de connexion au serveur
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
     })
-    .then(response => response.text()) 
-    .then(data => {
+    .then(response => response.text()) // Traite la réponse du serveur
+    .then(data => {// Redirection en fonction de la réponse
         if (data === 'accueil.html') {
             window.location.href = "/accueil";
-        } else if (data === 'BaseDeDonnees.html') {
-            window.location.href = "/basededonnees";
-        } else {
+        }else {
             alert("Identifiants incorrects");
         }
     })

@@ -1,4 +1,3 @@
-const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const path = require('path');
@@ -8,16 +7,12 @@ const fs = require('fs');
 const mqtt = require('mqtt');
 const WebSocket = require('ws');
 
-const app = express();
-
 // Charger les certificats SSL
 const options = {
     key: fs.readFileSync('/home/user/certificat/server.key'),
     cert: fs.readFileSync('/home/user/certificat/server.crt')
 };
 
-// Création du serveur HTTPS
-const server = https.createServer(app);
 
 // Connexion à la base de données SQLite
 const db = new sqlite3.Database('/var/www/html/BDD_meteo.db', (err) => {
@@ -57,29 +52,31 @@ mqttClient.on('connect', () => {
 });
 
 mqttClient.on('message', (topic, message) => {
+    const payload = message.toString();
     const orientationMatch = payload.match(/orientation\s+([\d.]+)°\s+\(([^ )]+)/i);
-const vitesseMatch = payload.match(/Vitesse du vent\s*:\s*([\d.]+)/i);
+    const vitesseMatch = payload.match(/Vitesse du vent\s*:\s*([\d.]+)/i);
 
-if (orientationMatch && vitesseMatch) {
-    const orientation_deg = parseFloat(orientationMatch[1]);
-    const orientation_card = orientationMatch[2];
-    const vitesse_vent = parseFloat(vitesseMatch[1]);
+    if (orientationMatch && vitesseMatch) {
+        const orientation_deg = parseFloat(orientationMatch[1]);
+        const orientation_card = orientationMatch[2];
+        const vitesse_vent = parseFloat(vitesseMatch[1]);
 
-    const data = {
-        DirectionVentDegres: orientation_deg,
-        DirectionVentCardinal: orientation_card,
-        VitesseVent: vitesse_vent,
-        Temperature: null // Si disponible plus tard
-    };
+        const data = {
+            DirectionVentDegres: orientation_deg,
+            DirectionVentCardinal: orientation_card,
+            VitesseVent: vitesse_vent,
+            Temperature: null // Si disponible plus tard
+        };
 
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(data));
-        }
-    });
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(data));
+            }
+        });
 
-    console.log('Données MQTT envoyées :', data);
-}
+        console.log('Données MQTT envoyées :', data);
+    }
+});
 
 // Middleware pour analyser les requêtes POST et les cookies
 app.use(express.urlencoded({ extended: true }));
@@ -119,7 +116,7 @@ app.post('/login', (req, res) => {
             // Créer la session utilisateur avec le nom d'utilisateur
             req.session.user = { username: row.username };
             console.log('Session créée pour :', req.session.user.username);
-            res.send('accueil.html');
+            res.send('/accueil');
             
         } else {
             res.send('Identifiants incorrects');

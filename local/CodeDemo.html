@@ -21,12 +21,38 @@
             width: 300px;
             height: 300px;
             transition: transform 0.5s ease-in-out;
+        }.user-module {
+            background-color: #0056b3;
+            padding: 5px 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-module span {
+            font-weight: bold;
+        }
+
+        .user-module .btn {
+            font-size: 0.8rem;
+            margin-left: 10px;
+            color: white;
+            background-color: #dc3545;
+        }
+
+        .user-module .btn:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
 <header class="bg-primary text-white text-center p-3">
     <h1>Supervision Météorologique</h1>
+    <div class="user-module">
+            <span id="usernameDisplay">utilisateur</span>
+            <a href="/logout" class="btn btn-danger btn-sm" onclick="clearCache()">Déconnexion</a>
+        </div>
 </header>
 
 <div class="container mt-4">

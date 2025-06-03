@@ -71,7 +71,7 @@
             <h1 class="title">Base de Données</h1>
             <div class="user-module">
                 <span id="usernameDisplay"></span>
-                <button class="btn btn-danger" onclick="clearCache()">Déconnexion</button>
+            <a href="/logout" class="btn btn-danger btn-sm" onclick="clearCache()">Déconnexion</a>
             </div>
         </div>
     </header>
@@ -156,7 +156,7 @@ function clearCache() {
                     data.forEach(row => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td>${row.DateHeure}</td>
+                            <td>${row.DateHedéure}</td>
                             <td>${row.Temperature}</td>
                             <td>${row.VitesseVent}</td>
                             <td>${row.DirectionVentDegres}</td>
