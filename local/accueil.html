@@ -147,7 +147,7 @@ function clearCache() {
     }
 
     // Supprimer le cookie de session côté client
-    document.cookie = 'connect.sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    document.cookie = 'connect.sid=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; 
 
     // Rediriger et forcer un rechargement complet
     window.location.replace('/');
@@ -155,6 +155,36 @@ function clearCache() {
 
 </script>
 <script>
+    const ctx = document.getElementById('graphique').getContext('2d');
+    const vitesseData = {
+        labels: [],
+        datasets: [{
+            label: 'Vitesse du vent (km/h)',
+            data: [],
+            fill: false,
+            borderColor: 'blue',
+            tension: 0.1
+        }]
+    };
+
+    const vitesseChart = new Chart(ctx, {
+        type: 'line',
+        data: vitesseData,
+        options: {
+            responsive: true,
+            animation: false,
+            scales: {
+                x: {
+                    display: true,
+                    title: { display: true, text: 'Heure' }
+                },
+                y: {
+                    min: 0,
+                    title: { display: true, text: 'Vitesse (km/h)' }
+                }
+            }
+        }
+    });
 const ws = new WebSocket("wss://" + window.location.host);
     ws.onmessage = function(event) {
         const data = JSON.parse(event.data);
@@ -167,6 +197,19 @@ const ws = new WebSocket("wss://" + window.location.host);
 
         const compassImage = document.getElementById("compassImage");
         compassImage.style.transform = `rotate(${data.direction_deg}deg)`;
+    
+
+    // Mise à jour du graphique
+        const heure = new Date().toLocaleTimeString();
+        vitesseData.labels.push(heure);
+        vitesseData.datasets[0].data.push(data.vitesse);
+
+    // Limite à 20 points max pour lisibilité
+        if (vitesseData.labels.length > 20) {
+            vitesseData.labels.shift();
+            vitesseData.datasets[0].data.shift();
+        }
+    vitesseChart.update();
     };
 </script>
 
