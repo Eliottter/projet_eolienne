@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Créer un utilisateur</title>
+</head>
+<body>
+<h2>Inscription utilisateur</h2>
+<form onsubmit="registerUser(event)">
+    <input type="text" id="username" placeholder="Identifiant" required><br>
+    <input type="password" id="password" placeholder="Mot de passe" required><br>
+    <select id="role" required>
+    <option value="operateur">Opérateur</option>
+    <option value="responsable">Responsable</option>
+    </select><br>
+    <button type="submit">Créer</button>
+    </form>
+
+    <script>
+    function registerUser(event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const role = document.getElementById('role').value;
+
+    fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&role=${encodeURIComponent(role)}`
+    })
+    .then(res => res.text())
+    .then(alert)
+    .catch(console.error);
+    }
+</script>
+</body>
+</html>

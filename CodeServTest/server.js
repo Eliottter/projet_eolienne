@@ -1,11 +1,13 @@
-const session = require('express-session');
-const cookieParser = require('cookie-parser');
-const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
-const https = require('https');
-const fs = require('fs');
-const mqtt = require('mqtt');
-const WebSocket = require('ws');
+const session = require('express-session');// Pour la gestion des sessions
+const cookieParser = require('cookie-parser');// Pour la gestion des sessions et des cookies
+const path = require('path');// Pour la gestion des sessions et des cookies
+const sqlite3 = require('sqlite3').verbose();// Pour la base de données SQLite
+const https = require('https');// Pour le chiffrement SSL/TLS
+const fs = require('fs');// Pour le chiffrement SSL/TLS
+const mqtt = require('mqtt');//
+const WebSocket = require('ws'); // WebSocket pour la communication en temps réel
+const bcrypt = require('bcrypt'); //hachage des mots de passe
+
 
 // Charger les certificats SSL
 const options = {
@@ -38,43 +40,47 @@ const wss = new WebSocket.Server({ server });
 // Serveur web Express
 app.use(express.static('public')); // dossier avec tes fichiers HTML
 
-// MQTT sécurisé
-const mqttClient = mqtt.connect('mqtts://localhost:8883', {
-    username: 'user',
-    password: 'Azerty.1',
-    ca: fs.readFileSync('/etc/mosquitto/certs/server.crt'),
+
+
+// Pour envoyer les données depuis ton MQTT :
+function broadcastToClients(data) {
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(data));
+        }
+    });
+}
+
+// Exemple d’intégration avec MQTT 
+const client = mqtt.connect('mqtts://localhost:8883', {
+    username: "user",
+    password: "Azerty.1",
+    ca: fs.readFileSync("/etc/mosquitto/certs/server.crt"),
     rejectUnauthorized: false
 });
 
-mqttClient.on('connect', () => {
-    console.log('Connecté à MQTT sécurisé');
-    mqttClient.subscribe('capteur_present');
+client.on('connect', () => {
+    console.log("Connecté à MQTT");
+    client.subscribe("capteur_present");
 });
 
-mqttClient.on('message', (topic, message) => {
+client.on('message', (topic, message) => {
     const payload = message.toString();
-    const orientationMatch = payload.match(/orientation\s+([\d.]+)°\s+\(([^ )]+)/i);
+    console.log("MQTT reçu :", payload);
+
+    const orientationMatch = payload.match(/orientation\s+([\d.]+)°\s+\(([^ ]+)/i);
     const vitesseMatch = payload.match(/Vitesse du vent\s*:\s*([\d.]+)/i);
 
     if (orientationMatch && vitesseMatch) {
-        const orientation_deg = parseFloat(orientationMatch[1]);
-        const orientation_card = orientationMatch[2];
-        const vitesse_vent = parseFloat(vitesseMatch[1]);
-
         const data = {
-            DirectionVentDegres: orientation_deg,
-            DirectionVentCardinal: orientation_card,
-            VitesseVent: vitesse_vent,
-            Temperature: null // Si disponible plus tard
+            direction_deg: parseFloat(orientationMatch[1]),
+            direction_card: orientationMatch[2],
+            vitesse: parseFloat(vitesseMatch[1]),
+            temperature: 20 // Valeur fictive ou récupérée ailleurs
         };
-
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify(data));
-            }
-        });
-
-        console.log('Données MQTT envoyées :', data);
+        broadcastToClients(data);
+    } else {
+        console.log("Format de message MQTT incorrect");
     }
 });
 
@@ -112,17 +118,52 @@ app.post('/login', (req, res) => {
         if (err) {
             return res.status(500).send('Erreur de connexion à la base de données');
         }
-        if (row && row.password === password) {
-            // Créer la session utilisateur avec le nom d'utilisateur
-            req.session.user = { username: row.username };
-            console.log('Session créée pour :', req.session.user.username);
-            res.send('/accueil');
-            
-        } else {
-            res.send('Identifiants incorrects');
+        if (!row) {
+            return res.send('Identifiants incorrects');
         }
+
+        // Vérification du mot de passe hashé avec bcrypt
+        bcrypt.compare(password, row.password, (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Erreur serveur');
+            }
+
+            if (result) {
+                req.session.user = { username: row.username };
+                console.log('Session créée pour :', req.session.user.username);
+                res.send('/accueil');
+            } else {
+                res.send('Identifiants incorrects');
+            }
+        });
     });
 });
+
+// Formulaire registrer 
+app.post('/register', (req, res) => {
+    const { username, password, role } = req.body;
+
+    if (!username || !password || !role) {
+        return res.status(400).send("Champs manquants");
+    }
+
+    // Hachage du mot de passe
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+        if (err) return res.status(500).send("Erreur de hachage");
+
+        const sql = `INSERT INTO utilisateurs (username, password, role) VALUES (?, ?, ?)`;
+        db.run(sql, [username, hashedPassword, role], function(err) {
+            if (err) {
+                console.error(err.message);
+                return res.status(500).send("Erreur lors de l’ajout de l’utilisateur");
+            }
+            console.log(`Utilisateur ${username} ajouté avec le rôle ${role}`);
+            res.send("Utilisateur enregistré avec succès");
+        });
+    });
+});
+
 
 // Middleware pour vérifier si l'utilisateur est authentifié
 function isAuthenticated(req, res, next) {
@@ -153,13 +194,10 @@ app.get('/logout', (req, res) => {
             console.error('Erreur lors de la destruction de la session:', err);
             return res.status(500).send('Erreur lors de la déconnexion');
         }
-
         // Supprimer le cookie côté client
         res.clearCookie('connect.sid');
-
         // Forcer suppression côté serveur
         req.session = null;
-
         console.log('Utilisateur déconnecté, session détruite');
         res.redirect('/');
     });
