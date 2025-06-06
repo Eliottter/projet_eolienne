@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supervision Météorologique</title>
     <!-- Bootstrap CSS -->
-    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js -->
-    <script src="/chartjs/chart.umd.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- MQTT.js -->
-    <script src="/mqtt/mqtt.min.js"></script>
+    
 
     <style>
         .synoptique {
@@ -198,7 +196,7 @@ const ws = new WebSocket("wss://" + window.location.host);
         document.getElementById("directionText").textContent = data.direction_card;
 
         const compassImage = document.getElementById("compassImage");
-        compassImage.style.transform = `rotate(${-data.direction_deg}deg)`;
+        compassImage.style.transform = `rotate(${data.direction_deg}deg)`;
     
 
     // Mise à jour du graphique
@@ -207,7 +205,7 @@ const ws = new WebSocket("wss://" + window.location.host);
         vitesseData.datasets[0].data.push(data.vitesse);
 
     // Limite à 20 points max pour lisibilité
-        if (vitesseData.labels.length > 10) {
+        if (vitesseData.labels.length > 20) {
             vitesseData.labels.shift();
             vitesseData.datasets[0].data.shift();
         }
@@ -215,6 +213,7 @@ const ws = new WebSocket("wss://" + window.location.host);
     };
 </script>
 
+</script>
 
     <div class="text-center mt-4">
         <a href="/BaseDeDonnees" class="btn btn-primary btn-lg">Accéder à la Base de Données</a>

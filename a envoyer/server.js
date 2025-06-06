@@ -9,6 +9,7 @@ const WebSocket = require('ws'); // WebSocket pour la communication en temps ré
 const bcrypt = require('bcrypt'); //hachage des mots de passe
 
 
+
 // Charger les certificats SSL
 const options = {
     key: fs.readFileSync('/home/user/certificat/server.key'),
@@ -40,6 +41,12 @@ const wss = new WebSocket.Server({ server });
 // Serveur web Express
 app.use(express.static('public')); // dossier avec tes fichiers HTML
 
+// Bootstrap en local 
+app.use('/bootstrap', express.static(path.join(__dirname, 'node_modules/bootstrap/dist')));
+// Bootstrap en local pour les fichiers CSS et JS
+<script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+// Chart.js en local
+app.use('/chartjs', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
 
 
 // Pour envoyer les données depuis ton MQTT :
@@ -52,7 +59,7 @@ function broadcastToClients(data) {
 }
 
 // Exemple d’intégration avec MQTT 
-const client = mqtt.connect('mqtts://localhost:8883', {
+const client = mqtt.connect('mqtts://172.90.93.66:8883', {
     username: "user",
     password: "Azerty.1",
     ca: fs.readFileSync("/home/user/certificat/server.crt"),
@@ -107,8 +114,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Servir les fichiers statiques
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Traitement du formulaire de login
 app.post('/login', (req, res) => {
@@ -238,6 +243,6 @@ app.use((req, res) => {
 });
 
 // Démarrage du serveur
-server.listen(3000, () => {
-    console.log('Serveur HTTPS + WebSocket en écoute sur le port 3000');
+server.listen(443, () => {
+    console.log('Serveur HTTPS + WebSocket en écoute sur le port 443');
 });
